@@ -2,7 +2,7 @@ import { EventEmitter } from 'node:events';
 import { loadState, saveState } from './persistence.js';
 
 const TICK_MS = Number(process.env.TICK_MS ?? 1000);
-const REAL_SECONDS_PER_GAME_HOUR = Number(process.env.REAL_SECONDS_PER_GAME_HOUR ?? 10);
+const REAL_SECONDS_PER_GAME_HOUR = Number(process.env.REAL_SECONDS_PER_GAME_HOUR ?? 60);
 const SAVE_EVERY_MS = Number(process.env.SAVE_EVERY_MS ?? 5000);
 
 const FISH_DEFS = {

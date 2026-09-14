@@ -38,7 +38,8 @@ function setFormBusy(isBusy) {
 
 function renderStats() {
   if (!state) return;
-  fishCountEl.textContent = state.peces.filter((fish) => fish.vivo).length;
+  const aliveFish = state.peces.filter((fish) => fish.vivo).length;
+  fishCountEl.textContent = `${aliveFish}/${state.peces.length}`;
   plantCountEl.textContent = state.plantas.length;
   nutrientsEl.textContent = Math.round(state.nutrientes);
   gameHoursEl.textContent = Math.floor(state.horasJuego);
