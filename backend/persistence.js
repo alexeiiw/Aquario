@@ -15,6 +15,7 @@ export async function loadState(defaultState) {
       ...defaultState,
       ...state,
       peces: Array.isArray(state.peces) ? state.peces : [],
+      invertebrados: Array.isArray(state.invertebrados) ? state.invertebrados : [],
       plantas: Array.isArray(state.plantas) ? state.plantas : [],
       comida: Array.isArray(state.comida) ? state.comida : [],
       mensajes: Array.isArray(state.mensajes) ? state.mensajes : defaultState.mensajes

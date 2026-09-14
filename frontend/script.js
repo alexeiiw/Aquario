@@ -5,6 +5,7 @@ const messagesEl = document.querySelector('#messages');
 const form = document.querySelector('#chatForm');
 const input = document.querySelector('#chatInput');
 const fishCountEl = document.querySelector('#fishCount');
+const invertebrateCountEl = document.querySelector('#invertebrateCount');
 const plantCountEl = document.querySelector('#plantCount');
 const nutrientsEl = document.querySelector('#nutrients');
 const gameHoursEl = document.querySelector('#gameHours');
@@ -39,7 +40,9 @@ function setFormBusy(isBusy) {
 function renderStats() {
   if (!state) return;
   const aliveFish = state.peces.filter((fish) => fish.vivo).length;
+  const aliveInvertebrates = state.invertebrados.filter((animal) => animal.vivo).length;
   fishCountEl.textContent = `${aliveFish}/${state.peces.length}`;
+  invertebrateCountEl.textContent = `${aliveInvertebrates}/${state.invertebrados.length}`;
   plantCountEl.textContent = state.plantas.length;
   nutrientsEl.textContent = Math.round(state.nutrientes);
   gameHoursEl.textContent = Math.floor(state.horasJuego);
@@ -85,9 +88,90 @@ function drawAquarium() {
   drawWater();
   drawBubbles();
   drawPlants();
+  drawInvertebrates();
   drawFood();
   drawFish();
   drawOverlay();
+}
+
+function drawInvertebrates() {
+  if (!state) return;
+  for (const animal of state.invertebrados) {
+    ctx.save();
+    ctx.translate(animal.x, animal.y);
+    ctx.scale(animal.direccion || 1, 1);
+    const size = 18 * animal.escala;
+
+    if (!animal.vivo) {
+      ctx.globalAlpha = 0.45;
+      ctx.rotate(Math.PI);
+    }
+
+    if (animal.grupo === 'caracol') {
+      drawSnail(animal, size);
+    } else {
+      drawShrimp(animal, size);
+    }
+
+    drawHungerBar(animal, size * 0.9);
+    ctx.restore();
+  }
+}
+
+function drawSnail(animal, size) {
+  ctx.fillStyle = animal.accent;
+  ctx.beginPath();
+  ctx.ellipse(size * 0.35, size * 0.35, size * 0.8, size * 0.35, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = animal.color;
+  ctx.beginPath();
+  ctx.arc(-size * 0.15, 0, size * 0.72, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = 'rgba(2, 6, 23, 0.45)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(-size * 0.15, 0, size * 0.45, 0, Math.PI * 1.65);
+  ctx.stroke();
+
+  ctx.strokeStyle = animal.accent;
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.moveTo(size * 0.75, size * 0.1);
+  ctx.lineTo(size * 1.18, -size * 0.45);
+  ctx.moveTo(size * 0.85, size * 0.16);
+  ctx.lineTo(size * 1.3, -size * 0.25);
+  ctx.stroke();
+}
+
+function drawShrimp(animal, size) {
+  ctx.strokeStyle = animal.accent;
+  ctx.lineWidth = 1.5;
+  for (let i = 0; i < 5; i += 1) {
+    ctx.beginPath();
+    ctx.moveTo(-size * 0.2 + i * size * 0.18, size * 0.4);
+    ctx.lineTo(-size * 0.36 + i * size * 0.18, size * 0.9);
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = animal.color;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, size * 1.05, size * 0.48, -0.18, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = animal.accent;
+  ctx.beginPath();
+  ctx.moveTo(-size * 0.85, -size * 0.03);
+  ctx.lineTo(-size * 1.35, -size * 0.42);
+  ctx.lineTo(-size * 1.2, size * 0.28);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#02111f';
+  ctx.beginPath();
+  ctx.arc(size * 0.64, -size * 0.18, Math.max(2, size * 0.1), 0, Math.PI * 2);
+  ctx.fill();
 }
 
 function drawWater() {
@@ -234,7 +318,7 @@ function drawHungerBar(fish, size) {
 }
 
 function drawOverlay() {
-  if (!state || state.peces.length || state.plantas.length) return;
+  if (!state || state.peces.length || state.invertebrados.length || state.plantas.length) return;
   ctx.fillStyle = 'rgba(2, 6, 23, 0.38)';
   ctx.fillRect(0, 0, 960, 620);
   ctx.fillStyle = '#e0f2fe';
@@ -243,7 +327,7 @@ function drawOverlay() {
   ctx.fillText('Tu acuario esta vacio', 480, 280);
   ctx.font = '500 18px system-ui';
   ctx.fillStyle = '#bae6fd';
-  ctx.fillText('Usa el chat para agregar peces neon, guppy, anubias o ambulias.', 480, 318);
+  ctx.fillText('Usa el chat para agregar peces, caracoles, gambas y plantas de agua dulce.', 480, 318);
 }
 
 function makeBubble(startY = Math.random() * 620) {

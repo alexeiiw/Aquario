@@ -10,20 +10,26 @@ Debes responder exclusivamente con un objeto JSON valido, sin texto adicional, s
 
 Acciones permitidas:
 - COMPRAR_PEZ con especie "neon" o "guppy".
+- COMPRAR_INVERTEBRADO con especie "neritina", "manzana", "planorbis", "cherry", "amano" o "fantasma".
 - AGREGAR_PLANTA con especie "anubia" o "ambulia".
 - ALIMENTAR con cantidad numerica.
+- LIMPIAR_MUERTOS para retirar peces, caracoles o gambas muertos del acuario.
 
 Formato de respuesta requerido:
 {
   "acciones": [
     { "tipo": "COMPRAR_PEZ", "especie": "neon", "cantidad": 1 },
+    { "tipo": "COMPRAR_INVERTEBRADO", "especie": "cherry", "cantidad": 1 },
     { "tipo": "AGREGAR_PLANTA", "especie": "anubia", "cantidad": 1 },
-    { "tipo": "ALIMENTAR", "cantidad": 1 }
+    { "tipo": "ALIMENTAR", "cantidad": 1 },
+    { "tipo": "LIMPIAR_MUERTOS", "cantidad": 1 }
   ],
   "respuesta_chat": "Un mensaje amigable y breve en espanol confirmando lo que vas a hacer en el acuario."
 }
 
-Si no hay acciones validas, responde con "acciones": [] y explica brevemente que puede pedir peces neon, guppy, anubias, ambulias o alimentar.`;
+Si no hay acciones validas, responde con "acciones": [] y explica brevemente que puede pedir peces neon, guppy, caracoles neritina/manzana/planorbis, gambas cherry/amano/fantasma, anubias, ambulias, alimentar o limpiar muertos.`;
+
+const validInvertebrates = ['neritina', 'manzana', 'planorbis', 'cherry', 'amano', 'fantasma'];
 
 export async function interpretUserMessage(message) {
   try {
@@ -63,8 +69,16 @@ function sanitizeResult(result) {
       validActions.push({ tipo: 'AGREGAR_PLANTA', especie: action.especie, cantidad });
     }
 
+    if (type === 'COMPRAR_INVERTEBRADO' && validInvertebrates.includes(action.especie)) {
+      validActions.push({ tipo: 'COMPRAR_INVERTEBRADO', especie: action.especie, cantidad });
+    }
+
     if (type === 'ALIMENTAR') {
       validActions.push({ tipo: 'ALIMENTAR', cantidad });
+    }
+
+    if (type === 'LIMPIAR_MUERTOS') {
+      validActions.push({ tipo: 'LIMPIAR_MUERTOS', cantidad: 1 });
     }
   }
 
@@ -92,15 +106,36 @@ function fallbackInterpretation(message) {
   if (/ambulia/.test(text)) {
     actions.push({ tipo: 'AGREGAR_PLANTA', especie: 'ambulia', cantidad: findQuantity(text) });
   }
+  if (/neritina/.test(text)) {
+    actions.push({ tipo: 'COMPRAR_INVERTEBRADO', especie: 'neritina', cantidad: findQuantity(text) });
+  }
+  if (/manzana/.test(text)) {
+    actions.push({ tipo: 'COMPRAR_INVERTEBRADO', especie: 'manzana', cantidad: findQuantity(text) });
+  }
+  if (/planorbis/.test(text)) {
+    actions.push({ tipo: 'COMPRAR_INVERTEBRADO', especie: 'planorbis', cantidad: findQuantity(text) });
+  }
+  if (/cherry|cereza/.test(text)) {
+    actions.push({ tipo: 'COMPRAR_INVERTEBRADO', especie: 'cherry', cantidad: findQuantity(text) });
+  }
+  if (/amano/.test(text)) {
+    actions.push({ tipo: 'COMPRAR_INVERTEBRADO', especie: 'amano', cantidad: findQuantity(text) });
+  }
+  if (/fantasma|ghost/.test(text)) {
+    actions.push({ tipo: 'COMPRAR_INVERTEBRADO', especie: 'fantasma', cantidad: findQuantity(text) });
+  }
   if (/aliment|comida|dar de comer/.test(text)) {
     actions.push({ tipo: 'ALIMENTAR', cantidad: findQuantity(text) });
+  }
+  if (/limpi|retir|sacar|eliminar/.test(text) && /muert|cadaver|cad[aá]ver/.test(text)) {
+    actions.push({ tipo: 'LIMPIAR_MUERTOS', cantidad: 1 });
   }
 
   return {
     acciones: actions,
     respuesta_chat: actions.length > 0
       ? buildResponse(actions)
-      : 'No entendi una accion valida. Puedes pedirme peces neon, guppy, anubias, ambulias o alimentar el acuario.'
+      : 'No entendi una accion valida. Puedes pedirme peces neon, guppy, caracoles, gambas, anubias, ambulias, alimentar o limpiar muertos.'
   };
 }
 

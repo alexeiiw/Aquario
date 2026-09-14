@@ -28,6 +28,75 @@ const FISH_DEFS = {
   }
 };
 
+const INVERTEBRATE_DEFS = {
+  neritina: {
+    grupo: 'caracol',
+    nombre: 'Caracol Neritina',
+    latin: 'Neritina natalensis',
+    hungerPerHour: 2,
+    maxScale: 1,
+    growthHours: 60,
+    speed: 8,
+    color: '#a16207',
+    accent: '#fef3c7'
+  },
+  manzana: {
+    grupo: 'caracol',
+    nombre: 'Caracol Manzana',
+    latin: 'Pomacea bridgesii',
+    hungerPerHour: 3,
+    maxScale: 1.3,
+    growthHours: 72,
+    speed: 6,
+    color: '#d97706',
+    accent: '#fde68a'
+  },
+  planorbis: {
+    grupo: 'caracol',
+    nombre: 'Caracol Planorbis',
+    latin: 'Planorbidae',
+    hungerPerHour: 2.5,
+    maxScale: 0.9,
+    growthHours: 48,
+    speed: 7,
+    color: '#92400e',
+    accent: '#fed7aa'
+  },
+  cherry: {
+    grupo: 'gamba',
+    nombre: 'Gamba Cherry',
+    latin: 'Neocaridina davidi',
+    hungerPerHour: 3.5,
+    maxScale: 1,
+    growthHours: 44,
+    speed: 18,
+    color: '#ef4444',
+    accent: '#fecaca'
+  },
+  amano: {
+    grupo: 'gamba',
+    nombre: 'Gamba Amano',
+    latin: 'Caridina multidentata',
+    hungerPerHour: 3,
+    maxScale: 1.15,
+    growthHours: 58,
+    speed: 16,
+    color: '#94a3b8',
+    accent: '#e2e8f0'
+  },
+  fantasma: {
+    grupo: 'gamba',
+    nombre: 'Gamba Fantasma',
+    latin: 'Palaemonetes paludosus',
+    hungerPerHour: 3,
+    maxScale: 1.05,
+    growthHours: 52,
+    speed: 17,
+    color: '#bae6fd',
+    accent: '#f8fafc'
+  }
+};
+
 const PLANT_DEFS = {
   anubia: {
     nombre: 'Anubia',
@@ -47,18 +116,19 @@ const PLANT_DEFS = {
 
 function createDefaultState() {
   return {
-    version: 1,
+    version: 2,
     ancho: 960,
     alto: 620,
     horasJuego: 0,
     nutrientes: 12,
     peces: [],
+    invertebrados: [],
     plantas: [],
     comida: [],
     mensajes: [
       {
         autor: 'sistema',
-        texto: 'Acuario listo. Pide peces, plantas o comida desde el chat.',
+        texto: 'Acuario de agua dulce listo. Pide peces, caracoles, gambas, plantas, comida o limpieza desde el chat.',
         fecha: new Date().toISOString()
       }
     ],
@@ -113,6 +183,28 @@ function createPlant(especie) {
   };
 }
 
+function createInvertebrate(especie) {
+  const def = INVERTEBRATE_DEFS[especie];
+  return {
+    id: id(def.grupo),
+    especie,
+    grupo: def.grupo,
+    nombre: def.nombre,
+    latin: def.latin,
+    edadEnHoras: 0,
+    escala: 0.45,
+    hambre: 6,
+    vivo: true,
+    x: randomBetween(80, 880),
+    y: randomBetween(510, 552),
+    vx: randomBetween(-1, 1),
+    vy: 0,
+    direccion: Math.random() > 0.5 ? 1 : -1,
+    color: def.color,
+    accent: def.accent
+  };
+}
+
 function createFood(amount = 8) {
   return Array.from({ length: clamp(amount, 1, 40) }, () => ({
     id: id('comida'),
@@ -155,6 +247,8 @@ export class GameEngine extends EventEmitter {
       ...this.state,
       especies: {
         peces: Object.keys(FISH_DEFS),
+        caracoles: Object.entries(INVERTEBRATE_DEFS).filter(([, def]) => def.grupo === 'caracol').map(([key]) => key),
+        gambas: Object.entries(INVERTEBRATE_DEFS).filter(([, def]) => def.grupo === 'gamba').map(([key]) => key),
         plantas: Object.keys(PLANT_DEFS)
       },
       config: {
@@ -193,10 +287,25 @@ export class GameEngine extends EventEmitter {
         summary.push(`${cantidad} planta(s) ${action.especie}`);
       }
 
+      if (action.tipo === 'COMPRAR_INVERTEBRADO' && INVERTEBRATE_DEFS[action.especie]) {
+        for (let i = 0; i < cantidad; i += 1) {
+          this.state.invertebrados.push(createInvertebrate(action.especie));
+        }
+        summary.push(`${cantidad} invertebrado(s) ${action.especie}`);
+      }
+
       if (action.tipo === 'ALIMENTAR') {
         this.state.comida.push(...createFood(cantidad * 8));
         this.state.nutrientes = clamp(this.state.nutrientes + cantidad * 0.8, 0, 100);
         summary.push(`${cantidad} racion(es) de comida`);
+      }
+
+      if (action.tipo === 'LIMPIAR_MUERTOS') {
+        const removedFish = this.state.peces.filter((fish) => !fish.vivo).length;
+        const removedInvertebrates = this.state.invertebrados.filter((animal) => !animal.vivo).length;
+        this.state.peces = this.state.peces.filter((fish) => fish.vivo);
+        this.state.invertebrados = this.state.invertebrados.filter((animal) => animal.vivo);
+        summary.push(`${removedFish + removedInvertebrates} animal(es) muerto(s) retirado(s)`);
       }
     }
 
@@ -213,6 +322,7 @@ export class GameEngine extends EventEmitter {
     this.state.horasJuego += gameHours;
     this.updateFood(TICK_MS / 1000);
     this.updateFish(gameHours, TICK_MS / 1000);
+    this.updateInvertebrates(gameHours, TICK_MS / 1000);
     this.updatePlants(gameHours);
     this.state.ultimaActualizacion = new Date().toISOString();
     this.emitUpdate();
@@ -267,6 +377,33 @@ export class GameEngine extends EventEmitter {
     }
   }
 
+  updateInvertebrates(gameHours, deltaSeconds) {
+    for (const animal of this.state.invertebrados) {
+      if (!animal.vivo) continue;
+      const def = INVERTEBRATE_DEFS[animal.especie];
+      animal.edadEnHoras += gameHours;
+      animal.hambre = clamp(animal.hambre + def.hungerPerHour * gameHours, 0, 100);
+      animal.escala = clamp(0.45 + (animal.edadEnHoras / def.growthHours) * (def.maxScale - 0.45), 0.45, def.maxScale);
+
+      if (animal.hambre >= 100) {
+        animal.vivo = false;
+        continue;
+      }
+
+      const targetFood = this.findNearestFood(animal);
+      if (targetFood) {
+        this.moveBottomAnimalTowards(animal, targetFood, def.speed, deltaSeconds);
+        if (Math.hypot(animal.x - targetFood.x, animal.y - targetFood.y) < 16 * animal.escala) {
+          animal.hambre = 0;
+          this.state.nutrientes = clamp(this.state.nutrientes + 0.35, 0, 100);
+          this.state.comida = this.state.comida.filter((food) => food.id !== targetFood.id);
+        }
+      } else {
+        this.wanderBottomAnimal(animal, def.speed, deltaSeconds);
+      }
+    }
+  }
+
   findNearestFood(fish) {
     let nearest = null;
     let nearestDistance = Infinity;
@@ -306,6 +443,35 @@ export class GameEngine extends EventEmitter {
     this.keepFishInside(fish);
   }
 
+  moveBottomAnimalTowards(animal, target, speed, deltaSeconds) {
+    const dx = target.x - animal.x;
+    const dy = clamp(target.y, 500, 552) - animal.y;
+    const distance = Math.hypot(dx, dy) || 1;
+    animal.vx = dx / distance;
+    animal.vy = dy / distance;
+    animal.direccion = animal.vx >= 0 ? 1 : -1;
+    animal.x += animal.vx * speed * deltaSeconds;
+    animal.y += animal.vy * speed * deltaSeconds;
+    this.keepBottomAnimalInside(animal);
+  }
+
+  wanderBottomAnimal(animal, speed, deltaSeconds) {
+    if (Math.random() < 0.025) {
+      animal.vx += randomBetween(-0.35, 0.35);
+    }
+    animal.vx = clamp(animal.vx, -1, 1);
+    animal.direccion = animal.vx >= 0 ? 1 : -1;
+    animal.x += animal.vx * speed * 0.5 * deltaSeconds;
+    animal.y += Math.sin(Date.now() / 1200 + animal.x) * 0.08;
+    this.keepBottomAnimalInside(animal);
+  }
+
+  keepBottomAnimalInside(animal) {
+    if (animal.x < 28 || animal.x > this.state.ancho - 28) animal.vx *= -1;
+    animal.x = clamp(animal.x, 28, this.state.ancho - 28);
+    animal.y = clamp(animal.y, 498, this.state.alto - 52);
+  }
+
   keepFishInside(fish) {
     if (fish.x < 34 || fish.x > this.state.ancho - 34) fish.vx *= -1;
     if (fish.y < 76 || fish.y > this.state.alto - 98) fish.vy *= -1;
@@ -314,7 +480,9 @@ export class GameEngine extends EventEmitter {
   }
 
   normalizeState() {
+    this.state.invertebrados = Array.isArray(this.state.invertebrados) ? this.state.invertebrados : [];
     this.state.peces = this.state.peces.filter((fish) => FISH_DEFS[fish.tipo]);
+    this.state.invertebrados = this.state.invertebrados.filter((animal) => INVERTEBRATE_DEFS[animal.especie]);
     this.state.plantas = this.state.plantas.filter((plant) => PLANT_DEFS[plant.especie]);
     this.state.comida = this.state.comida.filter((food) => Number.isFinite(food.x) && Number.isFinite(food.y));
   }

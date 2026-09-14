@@ -16,6 +16,7 @@
           </div>
           <div class="status-grid">
             <span><strong id="fishCount">0</strong> peces</span>
+            <span><strong id="invertebrateCount">0</strong> invertebrados</span>
             <span><strong id="plantCount">0</strong> plantas</span>
             <span><strong id="nutrients">0</strong>% nutrientes</span>
             <span><strong id="gameHours">0</strong> h</span>
@@ -30,25 +31,30 @@
         <div class="chat-header">
           <p class="eyebrow">Motor LLM local</p>
           <h2>Chat del acuario</h2>
-          <p>Escribe en lenguaje natural: compra peces, agrega plantas o alimenta el ecosistema.</p>
+          <p>Acuario de agua dulce. Escribe en lenguaje natural: compra peces, caracoles, gambas, agrega plantas, alimenta o limpia muertos.</p>
         </div>
 
         <div class="catalog">
           <strong>Especies disponibles</strong>
           <span>Peces: neon, guppy</span>
+          <span>Caracoles: neritina, manzana, planorbis</span>
+          <span>Gambas: cherry, amano, fantasma</span>
           <span>Plantas: anubia, ambulia</span>
         </div>
 
         <div id="messages" class="messages" aria-live="polite"></div>
 
         <form id="chatForm" class="chat-form">
-          <textarea id="chatInput" rows="3" placeholder="Ej: agrega dos neones, una anubia y alimenta a los peces"></textarea>
+          <textarea id="chatInput" rows="3" placeholder="Ej: agrega dos neones, una gamba cherry, un caracol neritina y alimenta"></textarea>
           <button type="submit">Enviar</button>
         </form>
 
         <div class="tips">
           <strong>Ideas:</strong>
           <span>"Quiero un guppy"</span>
+          <span>"Agrega gambas cherry"</span>
+          <span>"Compra un caracol neritina"</span>
+          <span>"Limpia los muertos"</span>
           <span>"Pon tres ambulias"</span>
           <span>"Alimenta el acuario"</span>
         </div>
