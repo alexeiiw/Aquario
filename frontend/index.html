@@ -27,6 +27,7 @@
             <canvas id="aquarium" width="960" height="620" aria-label="Acuario virtual animado"></canvas>
           </div>
           <section class="ecosystem-panel" aria-label="Panel de ecosistema">
+            <button id="ecosystemToggle" class="ecosystem-toggle" type="button" aria-expanded="true">Ocultar panel</button>
             <div class="time-controls">
               <strong>Tiempo</strong>
               <div class="time-buttons">
@@ -55,7 +56,7 @@
         <div class="chat-header">
           <p class="eyebrow">Motor LLM local</p>
           <h2>Chat del acuario</h2>
-          <p>Acuario de agua dulce. Escribe en lenguaje natural: compra peces, caracoles, gambas, agrega plantas, alimenta o limpia muertos.</p>
+          <p>Escribe en lenguaje natural. Usa <strong>help</strong> o <strong>ideas</strong> para ver comandos disponibles.</p>
         </div>
 
         <div class="catalog">
@@ -70,19 +71,9 @@
         <div id="messages" class="messages" aria-live="polite"></div>
 
         <form id="chatForm" class="chat-form">
-          <textarea id="chatInput" rows="3" placeholder="Ej: agrega dos neones, una gamba cherry, un caracol neritina y alimenta"></textarea>
+          <textarea id="chatInput" rows="3" placeholder="Ej: help · agrega dos neones · pon tiempo rapido"></textarea>
           <button type="submit">Enviar</button>
         </form>
-
-        <div class="tips">
-          <strong>Ideas:</strong>
-          <span>"Quiero un guppy"</span>
-          <span>"Agrega gambas cherry"</span>
-          <span>"Compra un caracol neritina"</span>
-          <span>"Limpia los muertos"</span>
-          <span>"Pon tres ambulias"</span>
-          <span>"Alimenta el acuario"</span>
-        </div>
       </aside>
     </main>
 

@@ -68,6 +68,7 @@ rm -f backend/data/aquarium-state.json
 ## Especies de agua dulce y tiempo
 
 La interfaz tiene un panel de ecosistema al lado del acuario con controles de tiempo y calidad del agua.
+Ese panel se puede ocultar o mostrar desde el boton del propio panel para ver mejor el acuario.
 
 Velocidades disponibles:
 
@@ -169,6 +170,8 @@ Condiciones generales:
 
 ## Chat de ejemplo
 
+- `help`
+- `ideas`
 - `Quiero comprar dos peces neon y una anubia`
 - `Agrega tres gambas cherry y un caracol neritina`
 - `Compra un caracol manzana y dos gambas amano`

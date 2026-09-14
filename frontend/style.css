@@ -126,6 +126,28 @@ h2 {
   pointer-events: none;
 }
 
+.ecosystem-toggle {
+  justify-self: end;
+  width: fit-content;
+  padding: 7px 10px;
+  border: 1px solid rgba(148, 203, 255, 0.28);
+  color: var(--text);
+  background: rgba(2, 13, 27, 0.72);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(16px);
+  pointer-events: auto;
+  font-size: 0.78rem;
+}
+
+.ecosystem-panel.collapsed {
+  width: auto;
+}
+
+.ecosystem-panel.collapsed .time-controls,
+.ecosystem-panel.collapsed .water-panel {
+  display: none;
+}
+
 .time-controls,
 .water-panel {
   display: grid;
@@ -198,6 +220,10 @@ canvas {
   color: var(--muted);
   line-height: 1.45;
   font-size: 0.92rem;
+}
+
+.chat-header strong {
+  color: var(--text);
 }
 
 .catalog {
@@ -290,21 +316,6 @@ button:disabled {
   opacity: 0.7;
 }
 
-.tips {
-  display: grid;
-  gap: 6px;
-  padding: 0 12px 12px;
-  color: var(--muted);
-  font-size: 0.82rem;
-}
-
-.tips span {
-  padding: 7px 9px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
-}
-
 @media (max-width: 1180px) {
   .status-grid {
     grid-template-columns: repeat(3, minmax(92px, 1fr));
@@ -346,6 +357,10 @@ button:disabled {
     position: static;
     width: auto;
     margin-top: 8px;
+  }
+
+  .ecosystem-toggle {
+    justify-self: stretch;
   }
 
   .status-grid {

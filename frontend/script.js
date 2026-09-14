@@ -18,6 +18,8 @@ const nitrateTextEl = document.querySelector('#nitrateText');
 const oxygenTextEl = document.querySelector('#oxygenText');
 const filterTextEl = document.querySelector('#filterText');
 const aerationTextEl = document.querySelector('#aerationText');
+const ecosystemPanelEl = document.querySelector('.ecosystem-panel');
+const ecosystemToggleEl = document.querySelector('#ecosystemToggle');
 
 let state = null;
 let bubbles = Array.from({ length: 34 }, () => makeBubble());
@@ -47,6 +49,19 @@ document.querySelectorAll('[data-speed]').forEach((button) => {
     socket.emit('chat:message', `cambia el tiempo a ${button.dataset.speed.replace('_', ' ')}`);
   });
 });
+
+ecosystemToggleEl.addEventListener('click', () => {
+  const isCollapsed = ecosystemPanelEl.classList.toggle('collapsed');
+  ecosystemToggleEl.textContent = isCollapsed ? 'Mostrar panel' : 'Ocultar panel';
+  ecosystemToggleEl.setAttribute('aria-expanded', String(!isCollapsed));
+  localStorage.setItem('ecosystemPanelCollapsed', String(isCollapsed));
+});
+
+if (localStorage.getItem('ecosystemPanelCollapsed') === 'true') {
+  ecosystemPanelEl.classList.add('collapsed');
+  ecosystemToggleEl.textContent = 'Mostrar panel';
+  ecosystemToggleEl.setAttribute('aria-expanded', 'false');
+}
 
 function setFormBusy(isBusy) {
   form.querySelector('button').disabled = isBusy;

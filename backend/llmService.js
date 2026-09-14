@@ -17,6 +17,7 @@ Acciones permitidas:
 - LIMPIAR_MUERTOS para retirar peces, caracoles o gambas muertos del acuario.
 - CAMBIAR_TIEMPO con velocidad "pausado", "lento", "normal", "rapido" o "muy_rapido".
 - CONSULTAR_ESTADO para preguntar por calidad del agua o estado general.
+- AYUDA para mensajes como "help", "ayuda", "ideas" o "comandos".
 
 Formato de respuesta requerido:
 {
@@ -28,7 +29,8 @@ Formato de respuesta requerido:
     { "tipo": "ALIMENTAR", "cantidad": 1 },
     { "tipo": "LIMPIAR_MUERTOS", "cantidad": 1 },
     { "tipo": "CAMBIAR_TIEMPO", "velocidad": "rapido", "cantidad": 1 },
-    { "tipo": "CONSULTAR_ESTADO", "cantidad": 1 }
+    { "tipo": "CONSULTAR_ESTADO", "cantidad": 1 },
+    { "tipo": "AYUDA", "cantidad": 1 }
   ],
   "respuesta_chat": "Un mensaje amigable y breve en espanol confirmando lo que vas a hacer en el acuario."
 }
@@ -100,6 +102,10 @@ function sanitizeResult(result) {
     if (type === 'CONSULTAR_ESTADO') {
       validActions.push({ tipo: 'CONSULTAR_ESTADO', cantidad: 1 });
     }
+
+    if (type === 'AYUDA') {
+      validActions.push({ tipo: 'AYUDA', cantidad: 1 });
+    }
   }
 
   return {
@@ -113,6 +119,13 @@ function sanitizeResult(result) {
 function fallbackInterpretation(message) {
   const text = message.toLowerCase();
   const actions = [];
+
+  if (/^(help|ayuda|ideas|comandos|\?)\s*$/.test(text)) {
+    return {
+      acciones: [{ tipo: 'AYUDA', cantidad: 1 }],
+      respuesta_chat: 'Claro, aqui tienes comandos utiles.'
+    };
+  }
 
   if (/(ne[oó]n|neon)/.test(text)) {
     actions.push({ tipo: 'COMPRAR_PEZ', especie: 'neon', cantidad: findQuantity(text) });

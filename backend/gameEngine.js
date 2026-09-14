@@ -387,6 +387,10 @@ export class GameEngine extends EventEmitter {
       if (action.tipo === 'CONSULTAR_ESTADO') {
         summary.push(this.buildWaterStatusMessage());
       }
+
+      if (action.tipo === 'AYUDA') {
+        summary.push(this.buildHelpMessage());
+      }
     }
 
     if (summary.length > 0) {
@@ -725,6 +729,10 @@ export class GameEngine extends EventEmitter {
   buildWaterStatusMessage() {
     const water = this.state.calidadAgua;
     return `Agua: salud ${Math.round(water.salud)}%, amonio ${Math.round(water.amonio)}%, nitritos ${Math.round(water.nitritos)}%, nitratos ${Math.round(water.nitratos)}%, oxigeno ${Math.round(water.oxigeno)}%.`;
+  }
+
+  buildHelpMessage() {
+    return 'Comandos: agrega peces neon/guppy; compra caracoles neritina/manzana/planorbis; agrega gambas cherry/amano/fantasma; pon plantas anubia/ambulia; agrega algas verde/filamentosa; alimenta; limpia muertos; consulta calidad del agua; cambia tiempo a pausa/lento/normal/rapido/muy rapido.';
   }
 
   normalizeState() {
