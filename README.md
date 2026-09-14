@@ -23,6 +23,7 @@ Abrir `http://localhost:3000`.
 En Codespaces o Linux:
 
 ```bash
+sudo apt-get update && sudo apt-get install -y zstd
 curl -fsSL https://ollama.com/install.sh | sh
 ollama serve > ollama.log 2>&1 &
 ollama pull qwen2.5-coder:3b
