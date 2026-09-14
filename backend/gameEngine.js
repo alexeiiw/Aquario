@@ -401,6 +401,16 @@ export class GameEngine extends EventEmitter {
     this.state.mensajes = this.state.mensajes.slice(-80);
   }
 
+  resolveLocalCommand(message) {
+    const text = String(message || '').trim().toLowerCase();
+    if (/^(menu|men[uú]|ayuda|help|\?|comandos)$/.test(text)) return this.buildMasterMenuMessage();
+    if (/^(especies|catalogo|cat[aá]logo|disponibles)$/.test(text)) return this.buildSpeciesTreeMessage();
+    if (/^(ideas|ejemplos|sugerencias)$/.test(text)) return this.buildIdeasMessage();
+    if (/^(lista|inventario|habitantes|categorias|categor[ií]as)$/.test(text)) return this.buildInventoryMessage();
+    if (/^(estado|agua|calidad)$/.test(text)) return this.buildWaterStatusMessage();
+    return null;
+  }
+
   applyActions(actions = []) {
     const summary = [];
 
@@ -868,6 +878,44 @@ export class GameEngine extends EventEmitter {
 
   buildHelpMessage() {
     return 'Ayuda: lista o inventario para ver habitantes por categoria. Peces: neon, guppy, betta, molly, angel/escalar, cebra, corydora, platy, xipho, otocinclus. Invertebrados: caracoles neritina/manzana/planorbis y gambas cherry/amano/fantasma. Flora: plantas anubia/ambulia y algas verde/filamentosa. Ecosistema: alimenta, limpia muertos, calidad del agua, pausa, tiempo rapido/muy rapido/lento/normal.';
+  }
+
+  buildMasterMenuMessage() {
+    return [
+      'Menu maestro:',
+      'menu/help: muestra este arbol.',
+      'especies: lista peces, caracoles, gambas, plantas y algas disponibles.',
+      'inventario/lista: muestra lo que vive en tu acuario por categoria.',
+      'estado/agua: muestra calidad del agua.',
+      'ideas: ejemplos de comandos.',
+      'Acciones: alimentar, limpiar muertos, cambiar tiempo, comprar animales, agregar plantas o algas.'
+    ].join(' ');
+  }
+
+  buildSpeciesTreeMessage() {
+    return [
+      'Especies disponibles:',
+      `Peces: ${Object.keys(FISH_DEFS).join(', ')}.`,
+      'Caracoles: neritina, manzana, planorbis.',
+      'Gambas: cherry, amano, fantasma.',
+      'Plantas: anubia, ambulia.',
+      'Algas: verde, filamentosa.',
+      'Alias: beta=betta, escalar/pez angel=angel, danio=cebra, oto=otocinclus.'
+    ].join(' ');
+  }
+
+  buildIdeasMessage() {
+    return [
+      'Ideas:',
+      'agrega un betta;',
+      'compra dos mollys y un otocinclus;',
+      'agrega gambas cherry;',
+      'pon una anubia y alga verde;',
+      'alimenta el acuario;',
+      'limpia los muertos;',
+      'pon el tiempo rapido;',
+      'como esta la calidad del agua.'
+    ].join(' ');
   }
 
   buildInventoryMessage() {

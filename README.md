@@ -86,7 +86,9 @@ rm -f backend/data/aquarium-state.json
 - El panel flotante muestra tiempo y calidad del agua.
 - El panel flotante se puede ocultar/mostrar para ver mejor el acuario.
 - El chat tiene scroll y acepta lenguaje natural.
-- Escribe `help`, `ideas`, `ayuda`, `comandos` o `?` para ver comandos disponibles.
+- Escribe `menu` para abrir el arbol maestro de ayuda.
+- `menu` no pasa por el LLM: responde directo desde el backend.
+- Usa `especies`, `inventario`, `ideas` o `estado` para secciones especificas.
 - Escribe `lista`, `inventario`, `habitantes` o `que peces tengo` para ver lo que vive en el acuario por categorias.
 
 ## Tiempo
@@ -233,6 +235,7 @@ Condiciones generales:
 
 Ayuda:
 
+- `menu`
 - `help`
 - `ideas`
 - `ayuda`
@@ -246,6 +249,18 @@ Listado del acuario:
 - `habitantes`
 - `que peces tengo`
 - `que animales hay`
+
+Catalogo de especies:
+
+- `especies`
+- `catalogo`
+- `disponibles`
+
+Estado rapido:
+
+- `estado`
+- `agua`
+- `calidad`
 
 Comprar peces:
 

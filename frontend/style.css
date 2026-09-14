@@ -226,22 +226,6 @@ canvas {
   color: var(--text);
 }
 
-.catalog {
-  display: grid;
-  gap: 5px;
-  margin: 12px 12px 0;
-  padding: 12px;
-  border: 1px solid rgba(56, 189, 248, 0.2);
-  border-radius: 16px;
-  color: var(--muted);
-  background: rgba(56, 189, 248, 0.06);
-  font-size: 0.82rem;
-}
-
-.catalog strong {
-  color: var(--text);
-}
-
 .messages {
   flex: 1;
   min-height: 0;

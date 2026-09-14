@@ -41,6 +41,15 @@ io.on('connection', (socket) => {
     io.emit('state:update', game.getPublicState());
 
     try {
+      const localReply = game.resolveLocalCommand(message);
+      if (localReply) {
+        game.addChatMessage('ia', localReply);
+        io.emit('chat:reply', { acciones: [], respuesta_chat: localReply });
+        io.emit('state:update', game.getPublicState());
+        if (typeof callback === 'function') callback({ ok: true, result: { acciones: [], respuesta_chat: localReply } });
+        return;
+      }
+
       const result = await interpretUserMessage(message);
       const engineSummary = game.applyActions(result.acciones);
       const engineText = engineSummary.length > 0 ? ` ${engineSummary.join('. ')}.` : '';
