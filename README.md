@@ -200,6 +200,14 @@ Alimentar:
 - `dar de comer a los peces`
 - `pon comida`
 
+Alimento natural del ecosistema:
+
+- `otocinclus`, `molly`, `platy` y `xipho` pueden pastar algas.
+- `corydora`, `guppy`, `molly`, `platy` y `xipho` pueden aprovechar detrito/biofilm del sustrato si hay nutrientes disponibles.
+- Caracoles y gambas pueden comer algas, biofilm, detrito y cadaveres cercanos.
+- Plantas y algas ayudan a estabilizar el agua, pero no sustituyen por completo la alimentacion manual.
+- Llegar a hambre `100` ya no mata inmediatamente: el animal debe permanecer varias horas de juego en hambruna antes de morir.
+
 Limpiar muertos manualmente:
 
 - `limpia los muertos`

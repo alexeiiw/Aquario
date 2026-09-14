@@ -4,6 +4,8 @@ import { loadState, saveState } from './persistence.js';
 const TICK_MS = Number(process.env.TICK_MS ?? 1000);
 const REAL_SECONDS_PER_GAME_HOUR = Number(process.env.REAL_SECONDS_PER_GAME_HOUR ?? 60);
 const SAVE_EVERY_MS = Number(process.env.SAVE_EVERY_MS ?? 5000);
+const HUNGER_RATE_MULTIPLIER = Number(process.env.HUNGER_RATE_MULTIPLIER ?? 0.35);
+const STARVATION_GRACE_HOURS = Number(process.env.STARVATION_GRACE_HOURS ?? 10);
 
 const FISH_DEFS = {
   neon: {
@@ -277,6 +279,7 @@ function createFish(tipo) {
     edadEnHoras: 0,
     escala: 0.45,
     hambre: 8,
+    horasEnHambruna: 0,
     vivo: true,
     x: randomBetween(110, 760),
     y: randomBetween(130, 430),
@@ -313,6 +316,7 @@ function createInvertebrate(especie) {
     edadEnHoras: 0,
     escala: 0.45,
     hambre: 6,
+    horasEnHambruna: 0,
     vivo: true,
     x: randomBetween(80, 880),
     y: randomBetween(510, 552),
@@ -343,7 +347,7 @@ function createFood(amount = 8) {
     id: id('comida'),
     x: randomBetween(60, 900),
     y: randomBetween(26, 70),
-    vy: randomBetween(18, 32),
+    vy: randomBetween(10, 20),
     nutrientes: 0.25
   }));
 }
@@ -534,10 +538,11 @@ export class GameEngine extends EventEmitter {
       }
       const def = FISH_DEFS[fish.tipo];
       fish.edadEnHoras += gameHours;
-      fish.hambre = clamp(fish.hambre + def.hungerPerHour * gameHours, 0, 100);
+      fish.hambre = clamp(fish.hambre + def.hungerPerHour * HUNGER_RATE_MULTIPLIER * gameHours, 0, 100);
       fish.escala = clamp(0.45 + (fish.edadEnHoras / def.growthHours) * (def.maxScale - 0.45), 0.45, def.maxScale);
+      fish.horasEnHambruna = fish.hambre >= 100 ? (fish.horasEnHambruna || 0) + gameHours : 0;
 
-      if (fish.hambre >= 100) {
+      if (fish.horasEnHambruna >= STARVATION_GRACE_HOURS) {
         fish.vivo = false;
         fish.descomposicion = 0;
         fish.vx = randomBetween(-0.12, 0.12);
@@ -548,15 +553,51 @@ export class GameEngine extends EventEmitter {
       const targetFood = this.findNearestFood(fish);
       if (targetFood) {
         this.moveFishTowards(fish, targetFood, def.speed, deltaSeconds);
-        if (Math.hypot(fish.x - targetFood.x, fish.y - targetFood.y) < 20 * fish.escala) {
-          fish.hambre = 0;
+        if (Math.hypot(fish.x - targetFood.x, fish.y - targetFood.y) < 30 * fish.escala) {
+          fish.hambre = Math.max(0, fish.hambre - 75);
+          fish.horasEnHambruna = 0;
           this.state.nutrientes = clamp(this.state.nutrientes + 0.6, 0, 100);
           this.state.comida = this.state.comida.filter((food) => food.id !== targetFood.id);
         }
+      } else if (this.forageFishNaturally(fish, gameHours)) {
+        this.wanderFish(fish, def.speed * 0.75, deltaSeconds);
       } else {
         this.wanderFish(fish, def.speed, deltaSeconds);
       }
     }
+  }
+
+  forageFishNaturally(fish, gameHours) {
+    const algaeAvailable = this.state.algas.length > 0;
+    const plantAvailable = this.state.plantas.length > 0;
+    const detritusAvailable = this.state.nutrientes > 8;
+    let hungerReduction = 0;
+
+    if (['otocinclus', 'molly', 'platy', 'xipho'].includes(fish.tipo) && algaeAvailable) {
+      hungerReduction += 5 * gameHours;
+      this.grazeAlgae(3 * gameHours);
+    }
+
+    if (['corydora', 'molly', 'guppy', 'platy', 'xipho'].includes(fish.tipo) && detritusAvailable) {
+      hungerReduction += 2.5 * gameHours;
+      this.state.nutrientes = clamp(this.state.nutrientes - 0.08 * gameHours, 0, 100);
+    }
+
+    if (['guppy', 'molly', 'platy', 'xipho', 'otocinclus'].includes(fish.tipo) && plantAvailable) {
+      hungerReduction += 1.2 * gameHours;
+    }
+
+    if (hungerReduction <= 0) return false;
+    fish.hambre = clamp(fish.hambre - hungerReduction, 0, 100);
+    fish.horasEnHambruna = fish.hambre >= 100 ? fish.horasEnHambruna : 0;
+    return true;
+  }
+
+  grazeAlgae(amount) {
+    if (this.state.algas.length === 0) return;
+    const algae = this.state.algas[Math.floor(Math.random() * this.state.algas.length)];
+    algae.tamano = clamp(algae.tamano - amount, 0, algae.tamano);
+    this.state.algas = this.state.algas.filter((item) => item.tamano > 4);
   }
 
   sinkDeadFish(fish, deltaSeconds) {
@@ -623,10 +664,10 @@ export class GameEngine extends EventEmitter {
 
     if (quality.salud < 25) {
       for (const fish of this.state.peces) {
-        if (fish.vivo) fish.hambre = clamp(fish.hambre + 4 * gameHours, 0, 100);
+        if (fish.vivo) fish.hambre = clamp(fish.hambre + 1.5 * gameHours, 0, 100);
       }
       for (const animal of this.state.invertebrados) {
-        if (animal.vivo) animal.hambre = clamp(animal.hambre + 3 * gameHours, 0, 100);
+        if (animal.vivo) animal.hambre = clamp(animal.hambre + 1.2 * gameHours, 0, 100);
       }
     }
   }
@@ -658,10 +699,11 @@ export class GameEngine extends EventEmitter {
       if (!animal.vivo) continue;
       const def = INVERTEBRATE_DEFS[animal.especie];
       animal.edadEnHoras += gameHours;
-      animal.hambre = clamp(animal.hambre + def.hungerPerHour * gameHours, 0, 100);
+      animal.hambre = clamp(animal.hambre + def.hungerPerHour * HUNGER_RATE_MULTIPLIER * gameHours, 0, 100);
       animal.escala = clamp(0.45 + (animal.edadEnHoras / def.growthHours) * (def.maxScale - 0.45), 0.45, def.maxScale);
+      animal.horasEnHambruna = animal.hambre >= 100 ? (animal.horasEnHambruna || 0) + gameHours : 0;
 
-      if (animal.hambre >= 100) {
+      if (animal.horasEnHambruna >= STARVATION_GRACE_HOURS) {
         animal.vivo = false;
         animal.descomposicion = 0;
         continue;
@@ -673,6 +715,7 @@ export class GameEngine extends EventEmitter {
         if (Math.hypot(animal.x - targetCorpse.entity.x, animal.y - targetCorpse.entity.y) < 18 * animal.escala) {
           targetCorpse.entity.descomposicion = clamp((targetCorpse.entity.descomposicion || 0) + gameHours * 0.35, 0, 1);
           animal.hambre = clamp(animal.hambre - 18 * gameHours, 0, 100);
+          animal.horasEnHambruna = animal.hambre >= 100 ? animal.horasEnHambruna : 0;
           this.state.nutrientes = clamp(this.state.nutrientes + 0.2 * gameHours, 0, 100);
         }
         continue;
@@ -681,8 +724,9 @@ export class GameEngine extends EventEmitter {
       const targetFood = this.findNearestFood(animal);
       if (targetFood) {
         this.moveBottomAnimalTowards(animal, targetFood, def.speed, deltaSeconds);
-        if (Math.hypot(animal.x - targetFood.x, animal.y - targetFood.y) < 16 * animal.escala) {
-          animal.hambre = 0;
+        if (Math.hypot(animal.x - targetFood.x, animal.y - targetFood.y) < 24 * animal.escala) {
+          animal.hambre = Math.max(0, animal.hambre - 75);
+          animal.horasEnHambruna = 0;
           this.state.nutrientes = clamp(this.state.nutrientes + 0.35, 0, 100);
           this.state.comida = this.state.comida.filter((food) => food.id !== targetFood.id);
         }
@@ -692,14 +736,37 @@ export class GameEngine extends EventEmitter {
         if (Math.hypot(animal.x - targetAlgae.x, animal.y - targetAlgae.y) < 22 * animal.escala) {
           targetAlgae.tamano = clamp(targetAlgae.tamano - 8 * gameHours, 0, targetAlgae.tamano);
           animal.hambre = clamp(animal.hambre - 10 * gameHours, 0, 100);
+          animal.horasEnHambruna = animal.hambre >= 100 ? animal.horasEnHambruna : 0;
           this.state.algas = this.state.algas.filter((algae) => algae.tamano > 4);
         }
+      } else if (this.forageBottomAnimalNaturally(animal, gameHours)) {
+        this.wanderBottomAnimal(animal, def.speed * 0.7, deltaSeconds);
       } else {
         this.wanderBottomAnimal(animal, def.speed, deltaSeconds);
       }
     }
 
     this.removeConsumedCorpses();
+  }
+
+  forageBottomAnimalNaturally(animal, gameHours) {
+    const detritusAvailable = this.state.nutrientes > 6;
+    const plantBiofilmAvailable = this.state.plantas.length > 0;
+    let hungerReduction = 0;
+
+    if (detritusAvailable) {
+      hungerReduction += animal.grupo === 'caracol' ? 4 * gameHours : 3 * gameHours;
+      this.state.nutrientes = clamp(this.state.nutrientes - 0.1 * gameHours, 0, 100);
+    }
+
+    if (plantBiofilmAvailable) {
+      hungerReduction += 1.4 * gameHours;
+    }
+
+    if (hungerReduction <= 0) return false;
+    animal.hambre = clamp(animal.hambre - hungerReduction, 0, 100);
+    animal.horasEnHambruna = animal.hambre >= 100 ? animal.horasEnHambruna : 0;
+    return true;
   }
 
   findNearestCorpse(animal) {
