@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Acuario Virtual 2D</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="aquarium-panel">
+        <header class="panel-header">
+          <div>
+            <p class="eyebrow">Tamagotchi acuatico</p>
+            <h1>Acuario Virtual</h1>
+          </div>
+          <div class="status-grid">
+            <span><strong id="fishCount">0</strong> peces</span>
+            <span><strong id="plantCount">0</strong> plantas</span>
+            <span><strong id="nutrients">0</strong>% nutrientes</span>
+            <span><strong id="gameHours">0</strong> h</span>
+          </div>
+        </header>
+        <div class="canvas-wrap">
+          <canvas id="aquarium" width="960" height="620" aria-label="Acuario virtual animado"></canvas>
+        </div>
+      </section>
+
+      <aside class="chat-panel">
+        <div class="chat-header">
+          <p class="eyebrow">Motor LLM local</p>
+          <h2>Chat del acuario</h2>
+          <p>Escribe en lenguaje natural: compra peces, agrega plantas o alimenta el ecosistema.</p>
+        </div>
+
+        <div id="messages" class="messages" aria-live="polite"></div>
+
+        <form id="chatForm" class="chat-form">
+          <textarea id="chatInput" rows="3" placeholder="Ej: agrega dos neones, una anubia y alimenta a los peces"></textarea>
+          <button type="submit">Enviar</button>
+        </form>
+
+        <div class="tips">
+          <strong>Ideas:</strong>
+          <span>"Quiero un guppy"</span>
+          <span>"Pon tres ambulias"</span>
+          <span>"Alimenta el acuario"</span>
+        </div>
+      </aside>
+    </main>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>

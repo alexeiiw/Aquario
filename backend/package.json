@@ -1,0 +1,19 @@
+{
+  "name": "acuario-virtual-backend",
+  "version": "1.0.0",
+  "description": "Backend para acuario virtual 2D inteligente estilo Tamagotchi",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "ollama": "^0.5.17",
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
