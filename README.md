@@ -62,6 +62,7 @@ frontend/
   script.js          Canvas, sockets y controles
 scripts/
   start-codespace.sh Arranque completo con Ollama
+SUGERENCIAS.md       Roadmap de mejoras propuestas
 ```
 
 ## Persistencia
@@ -90,6 +91,7 @@ rm -f backend/data/aquarium-state.json
 - `menu` no pasa por el LLM: responde directo desde el backend.
 - Usa `especies`, `inventario`, `ideas` o `estado` para secciones especificas.
 - Escribe `lista`, `inventario`, `habitantes` o `que peces tengo` para ver lo que vive en el acuario por categorias.
+- El cuadro de texto muestra comandos frecuentes: `menu`, `especies`, `inventario`, `estado`, `alimentar`, `agrega un...`.
 
 ## Tiempo
 
@@ -241,6 +243,16 @@ Condiciones generales:
 
 ## Comandos de chat
 
+Comandos frecuentes recomendados:
+
+- `menu`
+- `especies`
+- `inventario`
+- `estado`
+- `ideas`
+- `alimentar`
+- `agrega un betta`
+
 Ayuda:
 
 - `menu`
@@ -304,3 +316,4 @@ Ecosistema:
 - El LLM interpreta el chat, pero el movimiento, hambre, agua, crecimiento, compatibilidad y reproduccion los maneja el backend.
 - Si Ollama no responde, existe un fallback local basico para comandos comunes.
 - No se deben versionar `backend/data/`, logs, `.env` ni `node_modules`.
+- Ver `SUGERENCIAS.md` para el roadmap de mejoras propuestas.

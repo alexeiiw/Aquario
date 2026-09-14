@@ -955,6 +955,7 @@ export class GameEngine extends EventEmitter {
       'inventario/lista: muestra lo que vive en tu acuario por categoria.',
       'estado/agua: muestra calidad del agua.',
       'ideas: ejemplos de comandos.',
+      'Comandos frecuentes: menu, especies, inventario, estado, ideas, alimentar, agrega un...',
       'Acciones: alimentar, limpiar muertos, cambiar tiempo, comprar animales, agregar plantas o algas.'
     ].join(' ');
   }
@@ -974,6 +975,10 @@ export class GameEngine extends EventEmitter {
   buildIdeasMessage() {
     return [
       'Ideas:',
+      'menu;',
+      'especies;',
+      'inventario;',
+      'estado;',
       'agrega un betta;',
       'compra dos mollys y un otocinclus;',
       'agrega gambas cherry;',
