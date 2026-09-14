@@ -518,7 +518,10 @@ export class GameEngine extends EventEmitter {
 
   updateFish(gameHours, deltaSeconds) {
     for (const fish of this.state.peces) {
-      if (!fish.vivo) continue;
+      if (!fish.vivo) {
+        this.sinkDeadFish(fish, deltaSeconds);
+        continue;
+      }
       const def = FISH_DEFS[fish.tipo];
       fish.edadEnHoras += gameHours;
       fish.hambre = clamp(fish.hambre + def.hungerPerHour * gameHours, 0, 100);
@@ -527,7 +530,8 @@ export class GameEngine extends EventEmitter {
       if (fish.hambre >= 100) {
         fish.vivo = false;
         fish.descomposicion = 0;
-        fish.vy = -0.15;
+        fish.vx = randomBetween(-0.12, 0.12);
+        fish.vy = randomBetween(0.6, 1);
         continue;
       }
 
@@ -542,6 +546,18 @@ export class GameEngine extends EventEmitter {
       } else {
         this.wanderFish(fish, def.speed, deltaSeconds);
       }
+    }
+  }
+
+  sinkDeadFish(fish, deltaSeconds) {
+    const bottomY = this.state.alto - 58;
+    if (fish.y < bottomY) {
+      fish.y = clamp(fish.y + (fish.vy || 0.8) * 18 * deltaSeconds, 76, bottomY);
+      fish.x = clamp(fish.x + (fish.vx || 0) * 10 * deltaSeconds, 34, this.state.ancho - 34);
+    } else {
+      fish.y = bottomY;
+      fish.vx = 0;
+      fish.vy = 0;
     }
   }
 
