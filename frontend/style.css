@@ -28,16 +28,17 @@ body {
 
 .app-shell {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 390px;
-  gap: 20px;
-  min-height: 100vh;
-  padding: 20px;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 12px;
+  height: 100vh;
+  padding: 10px;
+  overflow: hidden;
 }
 
 .aquarium-panel,
 .chat-panel {
   border: 1px solid var(--border);
-  border-radius: 28px;
+  border-radius: 24px;
   background: var(--panel);
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
   overflow: hidden;
@@ -47,20 +48,21 @@ body {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
 }
 
 .panel-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
-  padding: 22px 24px 16px;
+  gap: 14px;
+  padding: 14px 16px 10px;
 }
 
 .eyebrow {
   margin: 0 0 4px;
   color: var(--accent-2);
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -72,18 +74,27 @@ h2 {
   line-height: 1;
 }
 
+h1 {
+  font-size: clamp(1.55rem, 2.2vw, 2.3rem);
+}
+
+h2 {
+  font-size: 1.45rem;
+}
+
 .status-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(120px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(5, minmax(92px, 1fr));
+  gap: 8px;
 }
 
 .status-grid span {
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: 16px;
+  padding: 8px 10px;
+  border: 1px solid rgba(148, 203, 255, 0.22);
+  border-radius: 14px;
   color: var(--muted);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(2, 6, 23, 0.24);
+  backdrop-filter: blur(12px);
 }
 
 .status-grid strong {
@@ -91,34 +102,43 @@ h2 {
 }
 
 .aquarium-body {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
-  gap: 14px;
+  position: relative;
   flex: 1;
-  padding: 0 18px 18px;
   min-height: 0;
+  padding: 0 10px 10px;
 }
 
 .canvas-wrap {
   min-width: 0;
+  height: 100%;
 }
 
 .ecosystem-panel {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
   display: grid;
   grid-template-columns: 1fr;
   align-content: start;
-  gap: 12px;
+  gap: 10px;
+  width: min(320px, calc(100% - 28px));
+  pointer-events: none;
 }
 
 .time-controls,
 .water-panel {
   display: grid;
-  gap: 8px;
-  padding: 14px;
+  gap: 7px;
+  padding: 12px;
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: 16px;
   color: var(--muted);
-  background: rgba(2, 6, 23, 0.22);
+  background: rgba(2, 13, 27, 0.72);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(16px);
+  pointer-events: auto;
+  font-size: 0.9rem;
 }
 
 .time-controls strong,
@@ -130,14 +150,15 @@ h2 {
 .time-buttons {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .time-buttons button {
-  padding: 8px 10px;
+  padding: 7px 9px;
   border: 1px solid var(--border);
   color: var(--text);
   background: rgba(255, 255, 255, 0.06);
+  font-size: 0.8rem;
 }
 
 .time-buttons button.active {
@@ -154,9 +175,9 @@ canvas {
   display: block;
   width: 100%;
   height: 100%;
-  min-height: 520px;
+  min-height: 0;
   border: 1px solid rgba(147, 197, 253, 0.28);
-  border-radius: 24px;
+  border-radius: 22px;
   background: #07324f;
 }
 
@@ -168,26 +189,27 @@ canvas {
 }
 
 .chat-header {
-  padding: 24px 24px 16px;
+  padding: 16px 18px 12px;
   border-bottom: 1px solid var(--border);
 }
 
 .chat-header p:last-child {
-  margin: 10px 0 0;
+  margin: 8px 0 0;
   color: var(--muted);
   line-height: 1.45;
+  font-size: 0.92rem;
 }
 
 .catalog {
   display: grid;
-  gap: 8px;
-  margin: 14px 16px 0;
-  padding: 14px;
+  gap: 5px;
+  margin: 12px 12px 0;
+  padding: 12px;
   border: 1px solid rgba(56, 189, 248, 0.2);
-  border-radius: 18px;
+  border-radius: 16px;
   color: var(--muted);
   background: rgba(56, 189, 248, 0.06);
-  font-size: 0.9rem;
+  font-size: 0.82rem;
 }
 
 .catalog strong {
@@ -196,18 +218,19 @@ canvas {
 
 .messages {
   flex: 1;
-  min-height: 260px;
-  padding: 18px;
+  min-height: 0;
+  padding: 12px;
   overflow-y: auto;
 }
 
 .message {
   max-width: 92%;
-  margin-bottom: 12px;
-  padding: 12px 14px;
-  border-radius: 16px;
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
   color: var(--text);
   line-height: 1.4;
+  font-size: 0.92rem;
   background: rgba(255, 255, 255, 0.06);
 }
 
@@ -231,8 +254,8 @@ canvas {
 
 .chat-form {
   display: grid;
-  gap: 10px;
-  padding: 16px;
+  gap: 8px;
+  padding: 12px;
   border-top: 1px solid var(--border);
 }
 
@@ -240,8 +263,8 @@ textarea {
   width: 100%;
   resize: vertical;
   border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 12px 14px;
+  border-radius: 14px;
+  padding: 10px 12px;
   color: var(--text);
   background: rgba(2, 6, 23, 0.48);
   outline: none;
@@ -253,8 +276,8 @@ textarea:focus {
 
 button {
   border: 0;
-  border-radius: 16px;
-  padding: 13px 16px;
+  border-radius: 14px;
+  padding: 11px 14px;
   color: #03202e;
   font-weight: 900;
   cursor: pointer;
@@ -269,22 +292,35 @@ button:disabled {
 
 .tips {
   display: grid;
-  gap: 8px;
-  padding: 0 16px 18px;
+  gap: 6px;
+  padding: 0 12px 12px;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: 0.82rem;
 }
 
 .tips span {
-  padding: 8px 10px;
+  padding: 7px 9px;
   border: 1px solid var(--border);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.04);
 }
 
+@media (max-width: 1180px) {
+  .status-grid {
+    grid-template-columns: repeat(3, minmax(92px, 1fr));
+  }
+}
+
 @media (max-width: 980px) {
   .app-shell {
     grid-template-columns: 1fr;
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  .aquarium-panel {
+    min-height: 76vh;
   }
 
   .chat-panel {
@@ -303,14 +339,20 @@ button:disabled {
   }
 
   .aquarium-body {
-    grid-template-columns: 1fr;
+    padding: 0 8px 8px;
+  }
+
+  .ecosystem-panel {
+    position: static;
+    width: auto;
+    margin-top: 8px;
   }
 
   .status-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   canvas {
-    min-height: 420px;
+    height: 56vh;
   }
 }
