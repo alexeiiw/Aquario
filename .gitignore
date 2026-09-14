@@ -1,5 +1,19 @@
+# Dependencies
 node_modules/
+backend/node_modules/
+
+# Local runtime state
 backend/data/
+backend/data/*.json
+
+# Logs
 *.log
+ollama.log
+backend/ollama.log
+
+# Environment and editor files
 .env
+.env.*
+!.env.example
 .DS_Store
+.vscode/
