@@ -348,6 +348,7 @@ export class GameEngine extends EventEmitter {
 
       if (fish.hambre >= 100) {
         fish.vivo = false;
+        fish.descomposicion = 0;
         fish.vy = -0.15;
         continue;
       }
@@ -387,6 +388,18 @@ export class GameEngine extends EventEmitter {
 
       if (animal.hambre >= 100) {
         animal.vivo = false;
+        animal.descomposicion = 0;
+        continue;
+      }
+
+      const targetCorpse = this.findNearestCorpse(animal);
+      if (targetCorpse) {
+        this.moveBottomAnimalTowards(animal, targetCorpse.entity, def.speed, deltaSeconds);
+        if (Math.hypot(animal.x - targetCorpse.entity.x, animal.y - targetCorpse.entity.y) < 18 * animal.escala) {
+          targetCorpse.entity.descomposicion = clamp((targetCorpse.entity.descomposicion || 0) + gameHours * 0.35, 0, 1);
+          animal.hambre = clamp(animal.hambre - 18 * gameHours, 0, 100);
+          this.state.nutrientes = clamp(this.state.nutrientes + 0.2 * gameHours, 0, 100);
+        }
         continue;
       }
 
@@ -401,6 +414,40 @@ export class GameEngine extends EventEmitter {
       } else {
         this.wanderBottomAnimal(animal, def.speed, deltaSeconds);
       }
+    }
+
+    this.removeConsumedCorpses();
+  }
+
+  findNearestCorpse(animal) {
+    let nearest = null;
+    let nearestDistance = Infinity;
+    const corpses = [
+      ...this.state.peces.filter((fish) => !fish.vivo).map((entity) => ({ entity, type: 'pez' })),
+      ...this.state.invertebrados
+        .filter((candidate) => candidate.id !== animal.id && !candidate.vivo)
+        .map((entity) => ({ entity, type: 'invertebrado' }))
+    ];
+
+    for (const corpse of corpses) {
+      const distance = Math.hypot(animal.x - corpse.entity.x, animal.y - corpse.entity.y);
+      if (distance < nearestDistance) {
+        nearest = corpse;
+        nearestDistance = distance;
+      }
+    }
+
+    return nearestDistance <= 260 ? nearest : null;
+  }
+
+  removeConsumedCorpses() {
+    const consumedFish = this.state.peces.filter((fish) => !fish.vivo && (fish.descomposicion || 0) >= 1).length;
+    const consumedInvertebrates = this.state.invertebrados.filter((animal) => !animal.vivo && (animal.descomposicion || 0) >= 1).length;
+
+    if (consumedFish > 0 || consumedInvertebrates > 0) {
+      this.state.peces = this.state.peces.filter((fish) => fish.vivo || (fish.descomposicion || 0) < 1);
+      this.state.invertebrados = this.state.invertebrados.filter((animal) => animal.vivo || (animal.descomposicion || 0) < 1);
+      this.state.nutrientes = clamp(this.state.nutrientes + consumedFish * 1.5 + consumedInvertebrates * 0.8, 0, 100);
     }
   }
 

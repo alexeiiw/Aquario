@@ -103,6 +103,19 @@ Para retirar animales muertos del acuario, escribe en el chat:
 - `retira los cadaveres`
 - `saca los animales muertos`
 
+Los caracoles y gambas tambien cumplen una funcion natural de limpieza: si hay cadaveres cercanos, los consumen gradualmente y convierten parte de esa materia en nutrientes para las plantas. La limpieza manual sigue existiendo para retirar muertos de inmediato.
+
+## Ideas de ampliacion
+
+- Calidad del agua: amonio, nitritos, nitratos, pH y cambios parciales de agua.
+- Filtro y oxigenacion: si falla el filtro, sube la toxicidad y baja el oxigeno.
+- Algas: aparecen con exceso de nutrientes y sirven de alimento para caracoles/gambas.
+- Compatibilidad de especies: peces grandes podrian estresar o comer gambas pequenas.
+- Reproduccion: guppys, caracoles planorbis y gambas cherry podrian reproducirse si el ecosistema esta estable.
+- Inventario y tienda: dinero, precios, compras y limite de poblacion por tamano del acuario.
+- Eventos aleatorios: enfermedad, sobrealimentacion, plantas que sombrean zonas o ciclos de luz.
+- Panel de diagnostico: mostrar hambre promedio, animales muertos, calidad del agua y recomendaciones.
+
 ## Chat de ejemplo
 
 - `Quiero comprar dos peces neon y una anubia`
