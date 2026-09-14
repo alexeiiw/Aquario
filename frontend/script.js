@@ -7,6 +7,7 @@ const input = document.querySelector('#chatInput');
 const fishCountEl = document.querySelector('#fishCount');
 const invertebrateCountEl = document.querySelector('#invertebrateCount');
 const plantCountEl = document.querySelector('#plantCount');
+const algaeCountEl = document.querySelector('#algaeCount');
 const nutrientsEl = document.querySelector('#nutrients');
 const gameHoursEl = document.querySelector('#gameHours');
 const timeSpeedEl = document.querySelector('#timeSpeed');
@@ -74,6 +75,7 @@ function renderStats() {
   fishCountEl.textContent = `${aliveFish}/${state.peces.length}`;
   invertebrateCountEl.textContent = `${aliveInvertebrates}/${state.invertebrados.length}`;
   plantCountEl.textContent = state.plantas.length;
+  algaeCountEl.textContent = state.algas.length;
   nutrientsEl.textContent = Math.round(state.nutrientes);
   gameHoursEl.textContent = Math.floor(state.horasJuego);
   timeSpeedEl.textContent = state.velocidadTiempo;

@@ -9,7 +9,7 @@ const systemPrompt = `Eres el motor de IA de un juego de acuario virtual. Tu uni
 Debes responder exclusivamente con un objeto JSON valido, sin texto adicional, saludos ni explicaciones.
 
 Acciones permitidas:
-- COMPRAR_PEZ con especie "neon" o "guppy".
+- COMPRAR_PEZ con especie "neon", "guppy", "betta", "molly", "angel", "cebra", "corydora", "platy", "xipho" u "otocinclus".
 - COMPRAR_INVERTEBRADO con especie "neritina", "manzana", "planorbis", "cherry", "amano" o "fantasma".
 - AGREGAR_PLANTA con especie "anubia" o "ambulia".
 - AGREGAR_ALGA con especie "verde" o "filamentosa".
@@ -35,8 +35,9 @@ Formato de respuesta requerido:
   "respuesta_chat": "Un mensaje amigable y breve en espanol confirmando lo que vas a hacer en el acuario."
 }
 
-Si no hay acciones validas, responde con "acciones": [] y explica brevemente que puede pedir peces neon, guppy, caracoles neritina/manzana/planorbis, gambas cherry/amano/fantasma, anubias, ambulias, algas verdes/filamentosas, alimentar, cambiar tiempo, consultar agua o limpiar muertos.`;
+Si no hay acciones validas, responde con "acciones": [] y explica brevemente que puede pedir peces neon, guppy, betta, molly, angel/escalar, cebra, corydora, platy, xipho, otocinclus, caracoles, gambas, plantas, algas, alimento, tiempo, agua o limpieza.`;
 
+const validFish = ['neon', 'guppy', 'betta', 'molly', 'angel', 'cebra', 'corydora', 'platy', 'xipho', 'otocinclus'];
 const validInvertebrates = ['neritina', 'manzana', 'planorbis', 'cherry', 'amano', 'fantasma'];
 const validSpeeds = ['pausado', 'lento', 'normal', 'rapido', 'muy_rapido'];
 
@@ -70,7 +71,7 @@ function sanitizeResult(result) {
     const type = String(action.tipo || '').toUpperCase();
     const cantidad = normalizeQuantity(action.cantidad);
 
-    if (type === 'COMPRAR_PEZ' && ['neon', 'guppy'].includes(action.especie)) {
+    if (type === 'COMPRAR_PEZ' && validFish.includes(action.especie)) {
       validActions.push({ tipo: 'COMPRAR_PEZ', especie: action.especie, cantidad });
     }
 
@@ -132,6 +133,30 @@ function fallbackInterpretation(message) {
   }
   if (/guppy|gupi/.test(text)) {
     actions.push({ tipo: 'COMPRAR_PEZ', especie: 'guppy', cantidad: findQuantity(text) });
+  }
+  if (/betta|beta/.test(text)) {
+    actions.push({ tipo: 'COMPRAR_PEZ', especie: 'betta', cantidad: findQuantity(text) });
+  }
+  if (/molly|mollie|mollies/.test(text)) {
+    actions.push({ tipo: 'COMPRAR_PEZ', especie: 'molly', cantidad: findQuantity(text) });
+  }
+  if (/(pez\s+)?[aá]ngel|angel|escalar/.test(text)) {
+    actions.push({ tipo: 'COMPRAR_PEZ', especie: 'angel', cantidad: findQuantity(text) });
+  }
+  if (/cebra|danio/.test(text)) {
+    actions.push({ tipo: 'COMPRAR_PEZ', especie: 'cebra', cantidad: findQuantity(text) });
+  }
+  if (/corydora|cory/.test(text)) {
+    actions.push({ tipo: 'COMPRAR_PEZ', especie: 'corydora', cantidad: findQuantity(text) });
+  }
+  if (/platy/.test(text)) {
+    actions.push({ tipo: 'COMPRAR_PEZ', especie: 'platy', cantidad: findQuantity(text) });
+  }
+  if (/xipho|cola de espada|espada/.test(text)) {
+    actions.push({ tipo: 'COMPRAR_PEZ', especie: 'xipho', cantidad: findQuantity(text) });
+  }
+  if (/otocinclus|\boto\b/.test(text)) {
+    actions.push({ tipo: 'COMPRAR_PEZ', especie: 'otocinclus', cantidad: findQuantity(text) });
   }
   if (/anubia/.test(text)) {
     actions.push({ tipo: 'AGREGAR_PLANTA', especie: 'anubia', cantidad: findQuantity(text) });

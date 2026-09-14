@@ -25,6 +25,86 @@ const FISH_DEFS = {
     speed: 28,
     color: '#f59e0b',
     accent: '#60a5fa'
+  },
+  betta: {
+    nombre: 'Pez Betta',
+    latin: 'Betta splendens',
+    hungerPerHour: 6,
+    maxScale: 1.35,
+    growthHours: 48,
+    speed: 24,
+    color: '#7c3aed',
+    accent: '#fb7185'
+  },
+  molly: {
+    nombre: 'Pez Molly',
+    latin: 'Poecilia sphenops',
+    hungerPerHour: 7,
+    maxScale: 1.35,
+    growthHours: 46,
+    speed: 27,
+    color: '#f8fafc',
+    accent: '#0f172a'
+  },
+  angel: {
+    nombre: 'Pez Angel',
+    latin: 'Pterophyllum scalare',
+    hungerPerHour: 8,
+    maxScale: 1.75,
+    growthHours: 78,
+    speed: 22,
+    color: '#e5e7eb',
+    accent: '#facc15'
+  },
+  cebra: {
+    nombre: 'Danio Cebra',
+    latin: 'Danio rerio',
+    hungerPerHour: 5,
+    maxScale: 1.05,
+    growthHours: 34,
+    speed: 42,
+    color: '#cbd5e1',
+    accent: '#1e293b'
+  },
+  corydora: {
+    nombre: 'Corydora',
+    latin: 'Corydoras paleatus',
+    hungerPerHour: 5,
+    maxScale: 1.15,
+    growthHours: 52,
+    speed: 21,
+    color: '#a3a3a3',
+    accent: '#fde68a'
+  },
+  platy: {
+    nombre: 'Pez Platy',
+    latin: 'Xiphophorus maculatus',
+    hungerPerHour: 6,
+    maxScale: 1.18,
+    growthHours: 40,
+    speed: 28,
+    color: '#fb923c',
+    accent: '#fde047'
+  },
+  xipho: {
+    nombre: 'Cola de Espada',
+    latin: 'Xiphophorus hellerii',
+    hungerPerHour: 6,
+    maxScale: 1.3,
+    growthHours: 48,
+    speed: 30,
+    color: '#dc2626',
+    accent: '#f97316'
+  },
+  otocinclus: {
+    nombre: 'Otocinclus',
+    latin: 'Otocinclus affinis',
+    hungerPerHour: 4,
+    maxScale: 0.95,
+    growthHours: 44,
+    speed: 20,
+    color: '#78716c',
+    accent: '#fef3c7'
   }
 };
 
@@ -328,7 +408,7 @@ export class GameEngine extends EventEmitter {
       const cantidad = clamp(Number(action.cantidad || 1), 1, 20);
 
       if (action.tipo === 'COMPRAR_PEZ' && FISH_DEFS[action.especie]) {
-        const compatibility = this.checkCompatibility(cantidad);
+        const compatibility = this.checkCompatibility(cantidad, action.especie);
         if (!compatibility.ok) {
           summary.push(compatibility.message);
           continue;
@@ -347,7 +427,7 @@ export class GameEngine extends EventEmitter {
       }
 
       if (action.tipo === 'COMPRAR_INVERTEBRADO' && INVERTEBRATE_DEFS[action.especie]) {
-        const compatibility = this.checkCompatibility(cantidad);
+        const compatibility = this.checkCompatibility(cantidad, action.especie);
         if (!compatibility.ok) {
           summary.push(compatibility.message);
           continue;
@@ -716,13 +796,48 @@ export class GameEngine extends EventEmitter {
     return this.state.peces.length + this.state.invertebrados.length;
   }
 
-  checkCompatibility(amount) {
+  checkCompatibility(amount, species) {
     if (this.totalAnimals() + amount > 45) {
       return { ok: false, message: 'No se agrego: el acuario ya esta cerca de su limite biologico.' };
     }
     if (this.state.calidadAgua.salud < 35) {
       return { ok: false, message: 'No se agrego: la calidad del agua es baja; estabiliza el acuario primero.' };
     }
+
+    const aliveFishTypes = this.state.peces.filter((fish) => fish.vivo).map((fish) => fish.tipo);
+    const aliveShrimpTypes = this.state.invertebrados.filter((animal) => animal.vivo && animal.grupo === 'gamba').map((animal) => animal.especie);
+    const smallShrimpPresent = aliveShrimpTypes.some((type) => ['cherry', 'fantasma'].includes(type));
+
+    if (species === 'betta') {
+      if (aliveFishTypes.includes('betta') || amount > 1) {
+        return { ok: false, message: 'No se agrego: los bettas suelen ser territoriales; manten solo uno en este acuario.' };
+      }
+      if (aliveFishTypes.includes('guppy')) {
+        return { ok: false, message: 'No se agrego: betta y guppy pueden tener conflictos por aletas llamativas.' };
+      }
+      if (smallShrimpPresent) {
+        return { ok: false, message: 'No se agrego: un betta puede atacar gambas cherry o fantasma.' };
+      }
+    }
+
+    if (species === 'guppy' && aliveFishTypes.includes('betta')) {
+      return { ok: false, message: 'No se agrego: guppys con betta pueden generar agresion por aletas y colores.' };
+    }
+
+    if (['cherry', 'fantasma'].includes(species) && aliveFishTypes.includes('betta')) {
+      return { ok: false, message: 'No se agrego: el betta puede cazar gambas pequenas.' };
+    }
+
+    if (species === 'angel') {
+      if (aliveFishTypes.includes('neon') || smallShrimpPresent) {
+        return { ok: false, message: 'No se agrego: el pez angel adulto puede depredar neones o gambas pequenas.' };
+      }
+    }
+
+    if ((species === 'neon' || ['cherry', 'fantasma'].includes(species)) && aliveFishTypes.includes('angel')) {
+      return { ok: false, message: 'No se agrego: ya hay pez angel y podria depredar neones o gambas pequenas.' };
+    }
+
     return { ok: true, message: 'compatible' };
   }
 
@@ -732,7 +847,7 @@ export class GameEngine extends EventEmitter {
   }
 
   buildHelpMessage() {
-    return 'Comandos: agrega peces neon/guppy; compra caracoles neritina/manzana/planorbis; agrega gambas cherry/amano/fantasma; pon plantas anubia/ambulia; agrega algas verde/filamentosa; alimenta; limpia muertos; consulta calidad del agua; cambia tiempo a pausa/lento/normal/rapido/muy rapido.';
+    return 'Comandos: agrega peces neon/guppy/betta/molly/angel/cebra/corydora/platy/xipho/otocinclus; compra caracoles neritina/manzana/planorbis; agrega gambas cherry/amano/fantasma; pon plantas anubia/ambulia; agrega algas verde/filamentosa; alimenta; limpia muertos; consulta calidad del agua; cambia tiempo a pausa/lento/normal/rapido/muy rapido.';
   }
 
   normalizeState() {

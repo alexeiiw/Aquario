@@ -1,6 +1,6 @@
 # Acuario Virtual 2D Inteligente
 
-Version `1.2.0`.
+Version `1.3.0`.
 
 Simulador web estilo Tamagotchi con acuario 2D de agua dulce, chat lateral, backend Node.js y motor de intenciones con Ollama.
 
@@ -98,6 +98,14 @@ Peces disponibles:
 
 - `neon`: pez pequeño, hambre baja, crecimiento rapido.
 - `guppy`: pez mediano, hambre moderada, crecimiento estandar.
+- `betta`: pez territorial; no se recomienda con otro betta, guppys o gambas pequenas.
+- `molly`: pez comunitario resistente.
+- `angel`: pez angel o escalar; puede depredar neones o gambas pequenas al crecer.
+- `cebra`: danio cebra, rapido y activo.
+- `corydora`: pez de fondo pacifico.
+- `platy`: pez comunitario colorido.
+- `xipho`: cola de espada.
+- `otocinclus`: pez pequeno comealgas.
 
 Caracoles disponibles:
 
@@ -122,6 +130,7 @@ Algas disponibles, agregadas solo cuando las pides:
 - `filamentosa`: alga mas alta que consume mas nitratos.
 
 Caracoles y gambas pueden pastar algas y reducirlas con el tiempo.
+Las algas se cuentan aparte de las plantas en la interfaz porque son una categoria diferente del ecosistema.
 
 Por defecto, `60` segundos reales equivalen a `1` hora del juego. Puedes cambiarlo antes de iniciar el servidor:
 
@@ -173,6 +182,9 @@ Condiciones generales:
 - `help`
 - `ideas`
 - `Quiero comprar dos peces neon y una anubia`
+- `Agrega un betta`
+- `Compra dos mollys y un otocinclus`
+- `Quiero un pez angel`
 - `Agrega tres gambas cherry y un caracol neritina`
 - `Compra un caracol manzana y dos gambas amano`
 - `Agrega algas verdes`
