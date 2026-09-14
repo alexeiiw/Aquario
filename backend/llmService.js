@@ -10,6 +10,7 @@ Debes responder exclusivamente con un objeto JSON valido, sin texto adicional, s
 
 Acciones permitidas:
 - COMPRAR_PEZ con especie "neon", "guppy", "betta", "molly", "angel", "cebra", "corydora", "platy", "xipho" u "otocinclus".
+- Alias de peces: "beta" debe mapear a "betta"; "escalar" o "pez angel" a "angel"; "danio" a "cebra"; "cola de espada" a "xipho"; "oto" a "otocinclus".
 - COMPRAR_INVERTEBRADO con especie "neritina", "manzana", "planorbis", "cherry", "amano" o "fantasma".
 - AGREGAR_PLANTA con especie "anubia" o "ambulia".
 - AGREGAR_ALGA con especie "verde" o "filamentosa".
@@ -17,7 +18,8 @@ Acciones permitidas:
 - LIMPIAR_MUERTOS para retirar peces, caracoles o gambas muertos del acuario.
 - CAMBIAR_TIEMPO con velocidad "pausado", "lento", "normal", "rapido" o "muy_rapido".
 - CONSULTAR_ESTADO para preguntar por calidad del agua o estado general.
-- AYUDA para mensajes como "help", "ayuda", "ideas" o "comandos".
+- AYUDA para mensajes como "help", "ayuda", "ideas", "comandos" o "?".
+- LISTAR_HABITANTES para mensajes como "lista", "inventario", "que peces tengo", "habitantes" o "categorias".
 
 Formato de respuesta requerido:
 {
@@ -30,12 +32,13 @@ Formato de respuesta requerido:
     { "tipo": "LIMPIAR_MUERTOS", "cantidad": 1 },
     { "tipo": "CAMBIAR_TIEMPO", "velocidad": "rapido", "cantidad": 1 },
     { "tipo": "CONSULTAR_ESTADO", "cantidad": 1 },
-    { "tipo": "AYUDA", "cantidad": 1 }
+    { "tipo": "AYUDA", "cantidad": 1 },
+    { "tipo": "LISTAR_HABITANTES", "cantidad": 1 }
   ],
   "respuesta_chat": "Un mensaje amigable y breve en espanol confirmando lo que vas a hacer en el acuario."
 }
 
-Si no hay acciones validas, responde con "acciones": [] y explica brevemente que puede pedir peces neon, guppy, betta, molly, angel/escalar, cebra, corydora, platy, xipho, otocinclus, caracoles, gambas, plantas, algas, alimento, tiempo, agua o limpieza.`;
+Si no hay acciones validas, responde con "acciones": [] y explica brevemente que puede escribir "help" para ver comandos o pedir peces neon, guppy, betta, molly, angel/escalar, cebra, corydora, platy, xipho, otocinclus, caracoles, gambas, plantas, algas, alimento, tiempo, agua o limpieza.`;
 
 const validFish = ['neon', 'guppy', 'betta', 'molly', 'angel', 'cebra', 'corydora', 'platy', 'xipho', 'otocinclus'];
 const validInvertebrates = ['neritina', 'manzana', 'planorbis', 'cherry', 'amano', 'fantasma'];
@@ -71,8 +74,9 @@ function sanitizeResult(result) {
     const type = String(action.tipo || '').toUpperCase();
     const cantidad = normalizeQuantity(action.cantidad);
 
-    if (type === 'COMPRAR_PEZ' && validFish.includes(action.especie)) {
-      validActions.push({ tipo: 'COMPRAR_PEZ', especie: action.especie, cantidad });
+    const fishSpecies = normalizeFishSpecies(action.especie);
+    if (type === 'COMPRAR_PEZ' && validFish.includes(fishSpecies)) {
+      validActions.push({ tipo: 'COMPRAR_PEZ', especie: fishSpecies, cantidad });
     }
 
     if (type === 'AGREGAR_PLANTA' && ['anubia', 'ambulia'].includes(action.especie)) {
@@ -107,6 +111,10 @@ function sanitizeResult(result) {
     if (type === 'AYUDA') {
       validActions.push({ tipo: 'AYUDA', cantidad: 1 });
     }
+
+    if (type === 'LISTAR_HABITANTES') {
+      validActions.push({ tipo: 'LISTAR_HABITANTES', cantidad: 1 });
+    }
   }
 
   return {
@@ -125,6 +133,13 @@ function fallbackInterpretation(message) {
     return {
       acciones: [{ tipo: 'AYUDA', cantidad: 1 }],
       respuesta_chat: 'Claro, aqui tienes comandos utiles.'
+    };
+  }
+
+  if (/^(lista|inventario|habitantes|categorias|categor[ií]as)\s*$/.test(text) || (/qu[eé]|cu[aá]l/.test(text) && /(peces|animales|habitantes|tengo|hay)/.test(text))) {
+    return {
+      acciones: [{ tipo: 'LISTAR_HABITANTES', cantidad: 1 }],
+      respuesta_chat: 'Reviso el inventario actual del acuario.'
     };
   }
 
@@ -248,6 +263,24 @@ function normalizeQuantity(value) {
 
 function normalizeSpeed(value) {
   return String(value || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
+}
+
+function normalizeFishSpecies(value) {
+  const species = String(value || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
+  const aliases = {
+    beta: 'betta',
+    pez_betta: 'betta',
+    pez_beta: 'betta',
+    escalar: 'angel',
+    pez_angel: 'angel',
+    pez_ángel: 'angel',
+    danio: 'cebra',
+    danio_cebra: 'cebra',
+    cola_de_espada: 'xipho',
+    espada: 'xipho',
+    oto: 'otocinclus'
+  };
+  return aliases[species] || species;
 }
 
 function buildResponse(actions) {

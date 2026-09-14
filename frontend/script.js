@@ -339,34 +339,134 @@ function drawFish() {
       ctx.rotate(Math.PI);
     }
 
-    ctx.fillStyle = fish.color;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, size, size * 0.48, 0, 0, Math.PI * 2);
-    ctx.fill();
+    if (fish.tipo === 'angel') {
+      drawAngelFish(fish, size);
+    } else if (fish.tipo === 'betta') {
+      drawBettaFish(fish, size);
+    } else if (['corydora', 'otocinclus'].includes(fish.tipo)) {
+      drawBottomFish(fish, size);
+    } else {
+      drawGenericFish(fish, size);
+    }
 
-    ctx.fillStyle = fish.accent;
-    ctx.beginPath();
-    ctx.moveTo(-size * 0.82, 0);
-    ctx.lineTo(-size * 1.42, -size * 0.42);
-    ctx.lineTo(-size * 1.42, size * 0.42);
-    ctx.closePath();
-    ctx.fill();
+    drawHungerBar(fish, size);
+    ctx.restore();
+  }
+}
 
+function drawGenericFish(fish, size) {
+  ctx.fillStyle = fish.color;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, size, size * 0.48, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = fish.accent;
+  ctx.beginPath();
+  ctx.moveTo(-size * 0.82, 0);
+  ctx.lineTo(-size * 1.42, -size * 0.42);
+  ctx.lineTo(-size * 1.42, size * 0.42);
+  ctx.closePath();
+  ctx.fill();
+
+  if (fish.tipo === 'cebra') {
+    ctx.strokeStyle = fish.accent;
+    ctx.lineWidth = 2;
+    for (let i = -2; i <= 2; i += 1) {
+      ctx.beginPath();
+      ctx.moveTo(-size * 0.55 + i * size * 0.25, -size * 0.38);
+      ctx.lineTo(-size * 0.35 + i * size * 0.25, size * 0.36);
+      ctx.stroke();
+    }
+  } else if (fish.tipo === 'xipho') {
+    ctx.strokeStyle = fish.accent;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(-size * 1.35, size * 0.22);
+    ctx.lineTo(-size * 1.95, size * 0.55);
+    ctx.stroke();
+  } else {
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.76)';
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(-size * 0.25, 0);
     ctx.lineTo(size * 0.58, 0);
     ctx.stroke();
-
-    ctx.fillStyle = '#02111f';
-    ctx.beginPath();
-    ctx.arc(size * 0.58, -size * 0.12, Math.max(2.4, size * 0.08), 0, Math.PI * 2);
-    ctx.fill();
-
-    drawHungerBar(fish, size);
-    ctx.restore();
   }
+
+  drawFishEye(size);
+}
+
+function drawBettaFish(fish, size) {
+  ctx.fillStyle = fish.accent;
+  ctx.beginPath();
+  ctx.ellipse(-size * 0.85, 0, size * 0.75, size * 0.72, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(-size * 0.05, size * 0.45, size * 0.55, size * 0.35, 0.35, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = fish.color;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, size * 0.95, size * 0.44, 0, 0, Math.PI * 2);
+  ctx.fill();
+  drawFishEye(size);
+}
+
+function drawAngelFish(fish, size) {
+  ctx.fillStyle = fish.color;
+  ctx.beginPath();
+  ctx.moveTo(size * 0.75, 0);
+  ctx.lineTo(-size * 0.15, -size * 1.15);
+  ctx.lineTo(-size * 0.75, 0);
+  ctx.lineTo(-size * 0.15, size * 1.15);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = fish.accent;
+  ctx.beginPath();
+  ctx.moveTo(-size * 0.7, 0);
+  ctx.lineTo(-size * 1.25, -size * 0.45);
+  ctx.lineTo(-size * 1.25, size * 0.45);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.strokeStyle = '#0f172a';
+  ctx.lineWidth = 2;
+  for (let i = -1; i <= 1; i += 1) {
+    ctx.beginPath();
+    ctx.moveTo(i * size * 0.22, -size * 0.72);
+    ctx.lineTo(i * size * 0.08, size * 0.72);
+    ctx.stroke();
+  }
+  drawFishEye(size);
+}
+
+function drawBottomFish(fish, size) {
+  ctx.fillStyle = fish.color;
+  ctx.beginPath();
+  ctx.ellipse(0, size * 0.12, size * 0.95, size * 0.36, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = fish.accent;
+  ctx.beginPath();
+  ctx.moveTo(-size * 0.75, size * 0.1);
+  ctx.lineTo(-size * 1.18, -size * 0.18);
+  ctx.lineTo(-size * 1.18, size * 0.42);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = fish.accent;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(size * 0.65, size * 0.18);
+  ctx.lineTo(size * 1.15, size * 0.38);
+  ctx.stroke();
+  drawFishEye(size);
+}
+
+function drawFishEye(size) {
+  ctx.fillStyle = '#02111f';
+  ctx.beginPath();
+  ctx.arc(size * 0.58, -size * 0.12, Math.max(2.4, size * 0.08), 0, Math.PI * 2);
+  ctx.fill();
 }
 
 function drawHungerBar(fish, size) {

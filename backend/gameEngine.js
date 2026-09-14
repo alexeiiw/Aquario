@@ -471,6 +471,10 @@ export class GameEngine extends EventEmitter {
       if (action.tipo === 'AYUDA') {
         summary.push(this.buildHelpMessage());
       }
+
+      if (action.tipo === 'LISTAR_HABITANTES') {
+        summary.push(this.buildInventoryMessage());
+      }
     }
 
     if (summary.length > 0) {
@@ -847,7 +851,34 @@ export class GameEngine extends EventEmitter {
   }
 
   buildHelpMessage() {
-    return 'Comandos: agrega peces neon/guppy/betta/molly/angel/cebra/corydora/platy/xipho/otocinclus; compra caracoles neritina/manzana/planorbis; agrega gambas cherry/amano/fantasma; pon plantas anubia/ambulia; agrega algas verde/filamentosa; alimenta; limpia muertos; consulta calidad del agua; cambia tiempo a pausa/lento/normal/rapido/muy rapido.';
+    return 'Ayuda: lista o inventario para ver habitantes por categoria. Peces: neon, guppy, betta, molly, angel/escalar, cebra, corydora, platy, xipho, otocinclus. Invertebrados: caracoles neritina/manzana/planorbis y gambas cherry/amano/fantasma. Flora: plantas anubia/ambulia y algas verde/filamentosa. Ecosistema: alimenta, limpia muertos, calidad del agua, pausa, tiempo rapido/muy rapido/lento/normal.';
+  }
+
+  buildInventoryMessage() {
+    const fish = this.countBy(this.state.peces, (item) => item.tipo, (item) => item.vivo);
+    const deadFish = this.countBy(this.state.peces, (item) => item.tipo, (item) => !item.vivo);
+    const snails = this.countBy(this.state.invertebrados, (item) => item.especie, (item) => item.vivo && item.grupo === 'caracol');
+    const shrimp = this.countBy(this.state.invertebrados, (item) => item.especie, (item) => item.vivo && item.grupo === 'gamba');
+    const plants = this.countBy(this.state.plantas, (item) => item.especie);
+    const algae = this.countBy(this.state.algas, (item) => item.especie);
+
+    return `Habitantes: peces vivos [${this.formatCounts(fish)}]; peces muertos [${this.formatCounts(deadFish)}]; caracoles [${this.formatCounts(snails)}]; gambas [${this.formatCounts(shrimp)}]; plantas [${this.formatCounts(plants)}]; algas [${this.formatCounts(algae)}].`;
+  }
+
+  countBy(items, keySelector, predicate = () => true) {
+    const counts = {};
+    for (const item of items) {
+      if (!predicate(item)) continue;
+      const key = keySelector(item);
+      counts[key] = (counts[key] || 0) + 1;
+    }
+    return counts;
+  }
+
+  formatCounts(counts) {
+    const entries = Object.entries(counts);
+    if (entries.length === 0) return 'ninguno';
+    return entries.map(([key, value]) => `${key}: ${value}`).join(', ');
   }
 
   normalizeState() {

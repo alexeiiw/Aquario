@@ -2,25 +2,43 @@
 
 Version `1.3.0`.
 
-Simulador web estilo Tamagotchi con acuario 2D de agua dulce, chat lateral, backend Node.js y motor de intenciones con Ollama.
+Simulador web estilo Tamagotchi de un acuario 2D de agua dulce. El usuario controla el ecosistema desde un chat en lenguaje natural; el backend interpreta intenciones con Ollama y mantiene la simulacion, persistencia, tiempo, calidad del agua, hambre, crecimiento, reproduccion y compatibilidad de especies.
 
-## Requisitos
+## Inicio rapido en Codespaces
 
-- Node.js 20+
-- Ollama instalado y ejecutándose en `http://localhost:11434`
-- Modelo recomendado: `qwen2.5-coder:3b`
-
-## Ejecutar localmente
-
-Desde la raiz del repositorio en Codespaces puedes arrancar todo con:
+Desde la raiz del repositorio:
 
 ```bash
 npm start
 ```
 
-Ese comando instala `zstd` si falta, instala Ollama si falta, inicia Ollama, descarga el modelo configurado, instala dependencias del backend y arranca el servidor.
+Ese script ejecuta `scripts/start-codespace.sh` y hace lo necesario para levantar todo:
 
-Arranque manual del backend:
+- Instala `zstd` si falta.
+- Instala Ollama si falta.
+- Inicia `ollama serve`.
+- Descarga el modelo configurado, por defecto `qwen2.5-coder:3b`.
+- Instala dependencias del backend si falta `node_modules`.
+- Arranca el servidor en `http://localhost:3000`.
+
+Para usar otro modelo:
+
+```bash
+OLLAMA_MODEL=phi3 npm start
+```
+
+## Arranque manual
+
+Instalar Ollama en Linux/Codespaces:
+
+```bash
+sudo apt-get update && sudo apt-get install -y zstd
+curl -fsSL https://ollama.com/install.sh | sh
+ollama serve > ollama.log 2>&1 &
+ollama pull qwen2.5-coder:3b
+```
+
+Arrancar solo el backend:
 
 ```bash
 cd backend
@@ -30,166 +48,236 @@ npm start
 
 Abrir `http://localhost:3000`.
 
-## Ollama
+## Estructura
 
-En Codespaces o Linux:
-
-```bash
-sudo apt-get update && sudo apt-get install -y zstd
-curl -fsSL https://ollama.com/install.sh | sh
-ollama serve > ollama.log 2>&1 &
-ollama pull qwen2.5-coder:3b
-```
-
-Si estas en la raiz del repositorio en Codespaces, instala y ejecuta el backend asi:
-
-```bash
-cd backend
-npm install
-npm start
-```
-
-Puedes cambiar el modelo con la variable de entorno:
-
-```bash
-OLLAMA_MODEL=qwen2.5-coder:3b npm start
+```text
+backend/
+  server.js          Express + Socket.io
+  gameEngine.js      Simulacion del ecosistema
+  llmService.js      Intenciones con Ollama + fallback local
+  persistence.js     Guardado/carga del estado
+frontend/
+  index.html         Interfaz principal
+  style.css          Layout visual
+  script.js          Canvas, sockets y controles
+scripts/
+  start-codespace.sh Arranque completo con Ollama
 ```
 
 ## Persistencia
 
-El estado del acuario se guarda automáticamente en `backend/data/aquarium-state.json`. Esa carpeta está ignorada por Git para evitar subir partidas locales.
+El estado se guarda en `backend/data/aquarium-state.json`.
 
-Si quieres reiniciar la partida en Codespaces, detén el servidor y borra ese archivo:
+Ese directorio esta en `.gitignore`, por lo que:
+
+- Se conserva si vuelves al mismo Codespace.
+- Se conserva al reiniciar el servidor.
+- Se pierde si borras el Codespace o creas uno nuevo desde cero.
+
+Reiniciar partida:
 
 ```bash
 rm -f backend/data/aquarium-state.json
 ```
 
-## Especies de agua dulce y tiempo
+## Interfaz
 
-La interfaz tiene un panel de ecosistema al lado del acuario con controles de tiempo y calidad del agua.
-Ese panel se puede ocultar o mostrar desde el boton del propio panel para ver mejor el acuario.
+- La pecera ocupa la mayor parte de la pantalla.
+- El panel flotante muestra tiempo y calidad del agua.
+- El panel flotante se puede ocultar/mostrar para ver mejor el acuario.
+- El chat tiene scroll y acepta lenguaje natural.
+- Escribe `help`, `ideas`, `ayuda`, `comandos` o `?` para ver comandos disponibles.
+- Escribe `lista`, `inventario`, `habitantes` o `que peces tengo` para ver lo que vive en el acuario por categorias.
 
-Velocidades disponibles:
+## Tiempo
+
+Por defecto, `60` segundos reales equivalen a `1` hora del juego.
+
+Velocidades del panel y chat:
 
 - `pausado`: congela el paso del tiempo.
-- `lento`: avanza a media velocidad.
+- `lento`: media velocidad.
 - `normal`: velocidad base.
 - `rapido`: acelera el ecosistema.
-- `muy_rapido`: acelera mucho para observar crecimiento y cambios.
+- `muy_rapido`: acelera mucho para observar cambios.
 
-Tambien puedes cambiar la velocidad por chat:
+Ejemplos:
 
-- `pon el tiempo rapido`
 - `pausa el acuario`
+- `pon el tiempo rapido`
 - `vuelve a velocidad normal`
+- `ponlo muy rapido`
 
-Calidad del agua visible en panel:
+## Calidad del agua
 
+El panel muestra:
+
+- Salud general.
 - Amonio.
 - Nitritos.
 - Nitratos.
 - Oxigeno.
-- Salud general del agua.
+- Estado del filtro.
+- Estado de oxigenacion.
 
-El acuario empieza con filtro y oxigenacion activos. El filtro convierte amonio en nitritos y luego nitratos. Las plantas y algas consumen parte de los nitratos. Si la salud del agua baja mucho, los animales se estresan y empeoran mas rapido.
+Reglas principales:
 
-Peces disponibles:
+- Los animales vivos producen desechos.
+- Los muertos empeoran el agua si no se retiran o consumen.
+- Sobrealimentar deja comida que sube nutrientes y puede afectar el agua.
+- El filtro convierte amonio en nitritos y luego en nitratos.
+- Plantas y algas consumen parte de los nitratos.
+- Si la salud del agua baja mucho, los animales se estresan y empeoran mas rapido.
 
-- `neon`: pez pequeño, hambre baja, crecimiento rapido.
-- `guppy`: pez mediano, hambre moderada, crecimiento estandar.
-- `betta`: pez territorial; no se recomienda con otro betta, guppys o gambas pequenas.
-- `molly`: pez comunitario resistente.
-- `angel`: pez angel o escalar; puede depredar neones o gambas pequenas al crecer.
-- `cebra`: danio cebra, rapido y activo.
+Consulta por chat:
+
+- `como esta la calidad del agua`
+- `revisa el agua`
+- `estado del acuario`
+
+## Especies
+
+Peces de agua dulce:
+
+- `neon`: Paracheirodon innesi, pequeno y rapido.
+- `guppy`: Poecilia reticulata, comunitario y reproductivo.
+- `betta`: Betta splendens, territorial.
+- `molly`: Poecilia sphenops, comunitario resistente.
+- `angel`: Pterophyllum scalare, tambien llamado escalar.
+- `cebra`: Danio rerio, danio cebra activo.
 - `corydora`: pez de fondo pacifico.
 - `platy`: pez comunitario colorido.
 - `xipho`: cola de espada.
-- `otocinclus`: pez pequeno comealgas.
+- `otocinclus`: pequeno comealgas.
 
-Caracoles disponibles:
+Caracoles:
 
-- `neritina`: caracol de agua dulce comedor de algas.
-- `manzana`: caracol grande de agua dulce.
-- `planorbis`: caracol pequeno de agua dulce.
+- `neritina`: comedor de algas.
+- `manzana`: caracol grande.
+- `planorbis`: caracol pequeno y reproductivo.
 
-Gambas disponibles:
+Gambas:
 
-- `cherry`: gamba roja de agua dulce.
-- `amano`: gamba resistente y activa.
+- `cherry`: gamba roja pequena.
+- `amano`: gamba resistente.
 - `fantasma`: gamba clara/translucida.
 
-Plantas disponibles:
+Plantas reales:
 
-- `anubia`: crecimiento lento y resistente.
+- `anubia`: crecimiento lento.
 - `ambulia`: crecimiento mas rapido y alto.
 
-Algas disponibles, agregadas solo cuando las pides:
+Algas, separadas de plantas:
 
-- `verde`: alga baja que consume nitratos y sirve de alimento natural.
-- `filamentosa`: alga mas alta que consume mas nitratos.
+- `verde`: alga baja que consume nitratos.
+- `filamentosa`: alga alta que consume mas nitratos.
 
-Caracoles y gambas pueden pastar algas y reducirlas con el tiempo.
-Las algas se cuentan aparte de las plantas en la interfaz porque son una categoria diferente del ecosistema.
+Las algas no cuentan como plantas en la interfaz porque son otra categoria del ecosistema.
 
-Por defecto, `60` segundos reales equivalen a `1` hora del juego. Puedes cambiarlo antes de iniciar el servidor:
+## Compatibilidad
 
-```bash
-REAL_SECONDS_PER_GAME_HOUR=120 npm start
-```
+El motor puede rechazar compras si el ecosistema no conviene.
 
-El contador de peces e invertebrados muestra `vivos/total`. Si ves `0/2`, esos animales murieron por hambre y ya no se moveran.
+Reglas actuales:
 
-Para retirar animales muertos del acuario, escribe en el chat:
+- Maximo biologico aproximado: `45` animales.
+- Si la calidad del agua es baja, no se agregan animales nuevos.
+- Solo un `betta` por acuario.
+- `betta` no se permite con `guppy`.
+- `betta` puede atacar gambas pequenas (`cherry`, `fantasma`).
+- `angel` adulto puede depredar `neon`, `cherry` o `fantasma`.
+- `betta` y `angel` no son excluyentes entre si en esta simulacion, pero ambos requieren vigilar compatibilidad con especies pequenas.
+
+Si una compra se rechaza, el chat explica el motivo.
+
+## Alimentacion, limpieza y algas
+
+Alimentar:
+
+- `alimenta el acuario`
+- `dar de comer a los peces`
+- `pon comida`
+
+Limpiar muertos manualmente:
 
 - `limpia los muertos`
 - `retira los cadaveres`
 - `saca los animales muertos`
 
-Los caracoles y gambas tambien cumplen una funcion natural de limpieza: si hay cadaveres cercanos, los consumen gradualmente y convierten parte de esa materia en nutrientes para las plantas. La limpieza manual sigue existiendo para retirar muertos de inmediato.
+Limpieza natural:
 
-## Compatibilidad y reproduccion
+- Caracoles y gambas vivos buscan cadaveres cercanos.
+- Al consumirlos, reducen su hambre y convierten parte en nutrientes.
+- Caracoles y gambas tambien pueden pastar algas.
 
-Antes de agregar animales, el motor revisa condiciones basicas del ecosistema. Si el acuario esta saturado o la calidad del agua es baja, la compra puede rechazarse con un mensaje en el chat.
+## Reproduccion
 
-La reproduccion puede ocurrir automaticamente si el ecosistema esta estable:
+Puede ocurrir automaticamente si el ecosistema esta estable.
 
-- Guppys.
-- Gambas cherry.
-- Caracoles planorbis.
+Especies reproductivas actuales:
+
+- `guppy`.
+- `cherry`.
+- `planorbis`.
 
 Condiciones generales:
 
 - Al menos dos individuos vivos de la especie.
-- Calidad de agua saludable.
+- Buena calidad del agua.
 - Oxigeno suficiente.
 - Hambre baja.
 - Tiempo minimo desde la ultima cria.
+- Capacidad disponible en el acuario.
 
-## Ideas de ampliacion
+## Comandos de chat
 
-- Calidad del agua: amonio, nitritos, nitratos, pH y cambios parciales de agua.
-- Filtro y oxigenacion: si falla el filtro, sube la toxicidad y baja el oxigeno.
-- Algas: aparecen con exceso de nutrientes y sirven de alimento para caracoles/gambas.
-- Compatibilidad de especies: peces grandes podrian estresar o comer gambas pequenas.
-- Reproduccion: guppys, caracoles planorbis y gambas cherry podrian reproducirse si el ecosistema esta estable.
-- Inventario y tienda: dinero, precios, compras y limite de poblacion por tamano del acuario.
-- Eventos aleatorios: enfermedad, sobrealimentacion, plantas que sombrean zonas o ciclos de luz.
-- Panel de diagnostico: mostrar hambre promedio, animales muertos, calidad del agua y recomendaciones.
-
-## Chat de ejemplo
+Ayuda:
 
 - `help`
 - `ideas`
-- `Quiero comprar dos peces neon y una anubia`
-- `Agrega un betta`
-- `Compra dos mollys y un otocinclus`
-- `Quiero un pez angel`
-- `Agrega tres gambas cherry y un caracol neritina`
-- `Compra un caracol manzana y dos gambas amano`
-- `Agrega algas verdes`
-- `Pon el tiempo muy rapido`
-- `Como esta la calidad del agua`
-- `Agrega un guppy y alimenta a los peces`
-- `Pon tres ambulias en el fondo`
-- `Limpia los muertos`
+- `ayuda`
+- `comandos`
+- `?`
+
+Listado del acuario:
+
+- `lista`
+- `inventario`
+- `habitantes`
+- `que peces tengo`
+- `que animales hay`
+
+Comprar peces:
+
+- `agrega dos neones`
+- `quiero un betta`
+- `compra dos mollys y un otocinclus`
+- `agrega un pez angel`
+- `pon tres danios cebra`
+
+Invertebrados:
+
+- `agrega gambas cherry`
+- `compra un caracol neritina`
+- `pon dos caracoles planorbis`
+
+Plantas y algas:
+
+- `agrega una anubia`
+- `pon tres ambulias`
+- `agrega algas verdes`
+- `pon alga filamentosa`
+
+Ecosistema:
+
+- `alimenta el acuario`
+- `limpia los muertos`
+- `como esta la calidad del agua`
+- `pon el tiempo rapido`
+- `pausa el acuario`
+
+## Notas de desarrollo
+
+- El LLM interpreta el chat, pero el movimiento, hambre, agua, crecimiento, compatibilidad y reproduccion los maneja el backend.
+- Si Ollama no responde, existe un fallback local basico para comandos comunes.
+- No se deben versionar `backend/data/`, logs, `.env` ni `node_modules`.
