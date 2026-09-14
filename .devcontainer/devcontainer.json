@@ -11,6 +11,6 @@
       "label": "Ollama"
     }
   },
-  "postCreateCommand": "cd backend && npm install && (command -v ollama >/dev/null 2>&1 || curl -fsSL https://ollama.com | sh)",
+  "postCreateCommand": "cd backend && npm install && (command -v ollama >/dev/null 2>&1 || curl -fsSL https://ollama.com/install.sh | sh)",
   "postStartCommand": "(pgrep -x ollama >/dev/null || ollama serve > ollama.log 2>&1 &)"
 }

@@ -23,9 +23,17 @@ Abrir `http://localhost:3000`.
 En Codespaces o Linux:
 
 ```bash
-curl -fsSL https://ollama.com | sh
+curl -fsSL https://ollama.com/install.sh | sh
 ollama serve > ollama.log 2>&1 &
 ollama pull qwen2.5-coder:3b
+```
+
+Si estas en la raiz del repositorio en Codespaces, instala y ejecuta el backend asi:
+
+```bash
+cd backend
+npm install
+npm start
 ```
 
 Puedes cambiar el modelo con la variable de entorno:
