@@ -42,8 +42,10 @@ io.on('connection', (socket) => {
 
     try {
       const result = await interpretUserMessage(message);
-      game.applyActions(result.acciones);
-      game.addChatMessage('ia', result.respuesta_chat);
+      const engineSummary = game.applyActions(result.acciones);
+      const engineText = engineSummary.length > 0 ? ` ${engineSummary.join('. ')}.` : '';
+      const reply = `${result.respuesta_chat}${engineText}`.slice(0, 700);
+      game.addChatMessage('ia', reply);
       io.emit('chat:reply', result);
       io.emit('state:update', game.getPublicState());
       if (typeof callback === 'function') callback({ ok: true, result });

@@ -1,6 +1,6 @@
 # Acuario Virtual 2D Inteligente
 
-Version `1.1.0`.
+Version `1.2.0`.
 
 Simulador web estilo Tamagotchi con acuario 2D de agua dulce, chat lateral, backend Node.js y motor de intenciones con Ollama.
 
@@ -67,6 +67,32 @@ rm -f backend/data/aquarium-state.json
 
 ## Especies de agua dulce y tiempo
 
+La interfaz tiene un panel de ecosistema al lado del acuario con controles de tiempo y calidad del agua.
+
+Velocidades disponibles:
+
+- `pausado`: congela el paso del tiempo.
+- `lento`: avanza a media velocidad.
+- `normal`: velocidad base.
+- `rapido`: acelera el ecosistema.
+- `muy_rapido`: acelera mucho para observar crecimiento y cambios.
+
+Tambien puedes cambiar la velocidad por chat:
+
+- `pon el tiempo rapido`
+- `pausa el acuario`
+- `vuelve a velocidad normal`
+
+Calidad del agua visible en panel:
+
+- Amonio.
+- Nitritos.
+- Nitratos.
+- Oxigeno.
+- Salud general del agua.
+
+El acuario empieza con filtro y oxigenacion activos. El filtro convierte amonio en nitritos y luego nitratos. Las plantas y algas consumen parte de los nitratos. Si la salud del agua baja mucho, los animales se estresan y empeoran mas rapido.
+
 Peces disponibles:
 
 - `neon`: pez pequeño, hambre baja, crecimiento rapido.
@@ -89,6 +115,13 @@ Plantas disponibles:
 - `anubia`: crecimiento lento y resistente.
 - `ambulia`: crecimiento mas rapido y alto.
 
+Algas disponibles, agregadas solo cuando las pides:
+
+- `verde`: alga baja que consume nitratos y sirve de alimento natural.
+- `filamentosa`: alga mas alta que consume mas nitratos.
+
+Caracoles y gambas pueden pastar algas y reducirlas con el tiempo.
+
 Por defecto, `60` segundos reales equivalen a `1` hora del juego. Puedes cambiarlo antes de iniciar el servidor:
 
 ```bash
@@ -104,6 +137,24 @@ Para retirar animales muertos del acuario, escribe en el chat:
 - `saca los animales muertos`
 
 Los caracoles y gambas tambien cumplen una funcion natural de limpieza: si hay cadaveres cercanos, los consumen gradualmente y convierten parte de esa materia en nutrientes para las plantas. La limpieza manual sigue existiendo para retirar muertos de inmediato.
+
+## Compatibilidad y reproduccion
+
+Antes de agregar animales, el motor revisa condiciones basicas del ecosistema. Si el acuario esta saturado o la calidad del agua es baja, la compra puede rechazarse con un mensaje en el chat.
+
+La reproduccion puede ocurrir automaticamente si el ecosistema esta estable:
+
+- Guppys.
+- Gambas cherry.
+- Caracoles planorbis.
+
+Condiciones generales:
+
+- Al menos dos individuos vivos de la especie.
+- Calidad de agua saludable.
+- Oxigeno suficiente.
+- Hambre baja.
+- Tiempo minimo desde la ultima cria.
 
 ## Ideas de ampliacion
 
@@ -121,6 +172,9 @@ Los caracoles y gambas tambien cumplen una funcion natural de limpieza: si hay c
 - `Quiero comprar dos peces neon y una anubia`
 - `Agrega tres gambas cherry y un caracol neritina`
 - `Compra un caracol manzana y dos gambas amano`
+- `Agrega algas verdes`
+- `Pon el tiempo muy rapido`
+- `Como esta la calidad del agua`
 - `Agrega un guppy y alimenta a los peces`
 - `Pon tres ambulias en el fondo`
 - `Limpia los muertos`

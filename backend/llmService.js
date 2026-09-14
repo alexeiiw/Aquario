@@ -12,8 +12,11 @@ Acciones permitidas:
 - COMPRAR_PEZ con especie "neon" o "guppy".
 - COMPRAR_INVERTEBRADO con especie "neritina", "manzana", "planorbis", "cherry", "amano" o "fantasma".
 - AGREGAR_PLANTA con especie "anubia" o "ambulia".
+- AGREGAR_ALGA con especie "verde" o "filamentosa".
 - ALIMENTAR con cantidad numerica.
 - LIMPIAR_MUERTOS para retirar peces, caracoles o gambas muertos del acuario.
+- CAMBIAR_TIEMPO con velocidad "pausado", "lento", "normal", "rapido" o "muy_rapido".
+- CONSULTAR_ESTADO para preguntar por calidad del agua o estado general.
 
 Formato de respuesta requerido:
 {
@@ -21,15 +24,19 @@ Formato de respuesta requerido:
     { "tipo": "COMPRAR_PEZ", "especie": "neon", "cantidad": 1 },
     { "tipo": "COMPRAR_INVERTEBRADO", "especie": "cherry", "cantidad": 1 },
     { "tipo": "AGREGAR_PLANTA", "especie": "anubia", "cantidad": 1 },
+    { "tipo": "AGREGAR_ALGA", "especie": "verde", "cantidad": 1 },
     { "tipo": "ALIMENTAR", "cantidad": 1 },
-    { "tipo": "LIMPIAR_MUERTOS", "cantidad": 1 }
+    { "tipo": "LIMPIAR_MUERTOS", "cantidad": 1 },
+    { "tipo": "CAMBIAR_TIEMPO", "velocidad": "rapido", "cantidad": 1 },
+    { "tipo": "CONSULTAR_ESTADO", "cantidad": 1 }
   ],
   "respuesta_chat": "Un mensaje amigable y breve en espanol confirmando lo que vas a hacer en el acuario."
 }
 
-Si no hay acciones validas, responde con "acciones": [] y explica brevemente que puede pedir peces neon, guppy, caracoles neritina/manzana/planorbis, gambas cherry/amano/fantasma, anubias, ambulias, alimentar o limpiar muertos.`;
+Si no hay acciones validas, responde con "acciones": [] y explica brevemente que puede pedir peces neon, guppy, caracoles neritina/manzana/planorbis, gambas cherry/amano/fantasma, anubias, ambulias, algas verdes/filamentosas, alimentar, cambiar tiempo, consultar agua o limpiar muertos.`;
 
 const validInvertebrates = ['neritina', 'manzana', 'planorbis', 'cherry', 'amano', 'fantasma'];
+const validSpeeds = ['pausado', 'lento', 'normal', 'rapido', 'muy_rapido'];
 
 export async function interpretUserMessage(message) {
   try {
@@ -69,6 +76,10 @@ function sanitizeResult(result) {
       validActions.push({ tipo: 'AGREGAR_PLANTA', especie: action.especie, cantidad });
     }
 
+    if (type === 'AGREGAR_ALGA' && ['verde', 'filamentosa'].includes(action.especie)) {
+      validActions.push({ tipo: 'AGREGAR_ALGA', especie: action.especie, cantidad });
+    }
+
     if (type === 'COMPRAR_INVERTEBRADO' && validInvertebrates.includes(action.especie)) {
       validActions.push({ tipo: 'COMPRAR_INVERTEBRADO', especie: action.especie, cantidad });
     }
@@ -79,6 +90,15 @@ function sanitizeResult(result) {
 
     if (type === 'LIMPIAR_MUERTOS') {
       validActions.push({ tipo: 'LIMPIAR_MUERTOS', cantidad: 1 });
+    }
+
+    const velocidad = normalizeSpeed(action.velocidad);
+    if (type === 'CAMBIAR_TIEMPO' && validSpeeds.includes(velocidad)) {
+      validActions.push({ tipo: 'CAMBIAR_TIEMPO', velocidad, cantidad: 1 });
+    }
+
+    if (type === 'CONSULTAR_ESTADO') {
+      validActions.push({ tipo: 'CONSULTAR_ESTADO', cantidad: 1 });
     }
   }
 
@@ -106,6 +126,9 @@ function fallbackInterpretation(message) {
   if (/ambulia/.test(text)) {
     actions.push({ tipo: 'AGREGAR_PLANTA', especie: 'ambulia', cantidad: findQuantity(text) });
   }
+  if (/alga|algas/.test(text)) {
+    actions.push({ tipo: 'AGREGAR_ALGA', especie: /filament/.test(text) ? 'filamentosa' : 'verde', cantidad: findQuantity(text) });
+  }
   if (/neritina/.test(text)) {
     actions.push({ tipo: 'COMPRAR_INVERTEBRADO', especie: 'neritina', cantidad: findQuantity(text) });
   }
@@ -130,12 +153,26 @@ function fallbackInterpretation(message) {
   if (/limpi|retir|sacar|eliminar/.test(text) && /muert|cadaver|cad[aá]ver/.test(text)) {
     actions.push({ tipo: 'LIMPIAR_MUERTOS', cantidad: 1 });
   }
+  if (/pausa|det[eé]n|detener/.test(text)) {
+    actions.push({ tipo: 'CAMBIAR_TIEMPO', velocidad: 'pausado', cantidad: 1 });
+  } else if (/muy r[aá]pid|super r[aá]pid|velocidad m[aá]xima/.test(text)) {
+    actions.push({ tipo: 'CAMBIAR_TIEMPO', velocidad: 'muy_rapido', cantidad: 1 });
+  } else if (/r[aá]pid|acelera/.test(text)) {
+    actions.push({ tipo: 'CAMBIAR_TIEMPO', velocidad: 'rapido', cantidad: 1 });
+  } else if (/lento|despacio/.test(text)) {
+    actions.push({ tipo: 'CAMBIAR_TIEMPO', velocidad: 'lento', cantidad: 1 });
+  } else if (/normal|reanuda|continua|contin[uú]a/.test(text) && /tiempo|velocidad|acuario/.test(text)) {
+    actions.push({ tipo: 'CAMBIAR_TIEMPO', velocidad: 'normal', cantidad: 1 });
+  }
+  if (/calidad|agua|amonio|nitrito|nitrato|oxigen/.test(text) && /(como|c[oó]mo|estado|revisa|ver|consulta)/.test(text)) {
+    actions.push({ tipo: 'CONSULTAR_ESTADO', cantidad: 1 });
+  }
 
   return {
     acciones: actions,
     respuesta_chat: actions.length > 0
       ? buildResponse(actions)
-      : 'No entendi una accion valida. Puedes pedirme peces neon, guppy, caracoles, gambas, anubias, ambulias, alimentar o limpiar muertos.'
+      : 'No entendi una accion valida. Puedes pedirme peces, caracoles, gambas, plantas, algas, alimento, velocidad, estado del agua o limpiar muertos.'
   };
 }
 
@@ -169,6 +206,10 @@ function normalizeQuantity(value) {
   const quantity = Number(value);
   if (!Number.isFinite(quantity)) return 1;
   return Math.max(1, Math.min(20, Math.floor(quantity)));
+}
+
+function normalizeSpeed(value) {
+  return String(value || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
 }
 
 function buildResponse(actions) {

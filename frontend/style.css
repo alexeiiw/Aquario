@@ -90,9 +90,64 @@ h2 {
   color: var(--text);
 }
 
-.canvas-wrap {
+.aquarium-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 14px;
   flex: 1;
   padding: 0 18px 18px;
+  min-height: 0;
+}
+
+.canvas-wrap {
+  min-width: 0;
+}
+
+.ecosystem-panel {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-content: start;
+  gap: 12px;
+}
+
+.time-controls,
+.water-panel {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  color: var(--muted);
+  background: rgba(2, 6, 23, 0.22);
+}
+
+.time-controls strong,
+.water-panel strong,
+.water-panel b {
+  color: var(--text);
+}
+
+.time-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.time-buttons button {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.time-buttons button.active {
+  color: #03202e;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+}
+
+meter {
+  width: 96px;
+  height: 10px;
 }
 
 canvas {
@@ -245,6 +300,10 @@ button:disabled {
   .panel-header {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .aquarium-body {
+    grid-template-columns: 1fr;
   }
 
   .status-grid {

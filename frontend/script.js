@@ -9,6 +9,15 @@ const invertebrateCountEl = document.querySelector('#invertebrateCount');
 const plantCountEl = document.querySelector('#plantCount');
 const nutrientsEl = document.querySelector('#nutrients');
 const gameHoursEl = document.querySelector('#gameHours');
+const timeSpeedEl = document.querySelector('#timeSpeed');
+const waterHealthEl = document.querySelector('#waterHealth');
+const waterHealthTextEl = document.querySelector('#waterHealthText');
+const ammoniaTextEl = document.querySelector('#ammoniaText');
+const nitriteTextEl = document.querySelector('#nitriteText');
+const nitrateTextEl = document.querySelector('#nitrateText');
+const oxygenTextEl = document.querySelector('#oxygenText');
+const filterTextEl = document.querySelector('#filterText');
+const aerationTextEl = document.querySelector('#aerationText');
 
 let state = null;
 let bubbles = Array.from({ length: 34 }, () => makeBubble());
@@ -33,6 +42,12 @@ form.addEventListener('submit', (event) => {
   setTimeout(() => setFormBusy(false), 12000);
 });
 
+document.querySelectorAll('[data-speed]').forEach((button) => {
+  button.addEventListener('click', () => {
+    socket.emit('chat:message', `cambia el tiempo a ${button.dataset.speed.replace('_', ' ')}`);
+  });
+});
+
 function setFormBusy(isBusy) {
   form.querySelector('button').disabled = isBusy;
 }
@@ -46,6 +61,20 @@ function renderStats() {
   plantCountEl.textContent = state.plantas.length;
   nutrientsEl.textContent = Math.round(state.nutrientes);
   gameHoursEl.textContent = Math.floor(state.horasJuego);
+  timeSpeedEl.textContent = state.velocidadTiempo;
+  document.querySelectorAll('[data-speed]').forEach((button) => {
+    button.classList.toggle('active', button.dataset.speed === state.velocidadTiempo);
+  });
+
+  const water = state.calidadAgua;
+  waterHealthEl.value = water.salud;
+  waterHealthTextEl.textContent = `${Math.round(water.salud)}%`;
+  ammoniaTextEl.textContent = `${Math.round(water.amonio)}%`;
+  nitriteTextEl.textContent = `${Math.round(water.nitritos)}%`;
+  nitrateTextEl.textContent = `${Math.round(water.nitratos)}%`;
+  oxygenTextEl.textContent = `${Math.round(water.oxigeno)}%`;
+  filterTextEl.textContent = state.equipos.filtroActivo ? 'activo' : 'apagado';
+  aerationTextEl.textContent = state.equipos.oxigenacionActiva ? 'activa' : 'apagada';
 }
 
 function renderMessages() {
@@ -88,10 +117,29 @@ function drawAquarium() {
   drawWater();
   drawBubbles();
   drawPlants();
+  drawAlgae();
   drawInvertebrates();
   drawFood();
   drawFish();
   drawOverlay();
+}
+
+function drawAlgae() {
+  if (!state) return;
+  for (const algae of state.algas) {
+    const sway = Math.sin(Date.now() / 700 + algae.x) * 3;
+    ctx.strokeStyle = algae.color;
+    ctx.lineWidth = algae.especie === 'filamentosa' ? 2 : 5;
+    ctx.lineCap = 'round';
+    const strands = algae.especie === 'filamentosa' ? 8 : 5;
+    for (let i = 0; i < strands; i += 1) {
+      const offset = (i - strands / 2) * 5;
+      ctx.beginPath();
+      ctx.moveTo(algae.x + offset, algae.y);
+      ctx.quadraticCurveTo(algae.x + offset + sway, algae.y - algae.tamano * 0.5, algae.x + offset * 0.4 + sway, algae.y - algae.tamano);
+      ctx.stroke();
+    }
+  }
 }
 
 function drawInvertebrates() {

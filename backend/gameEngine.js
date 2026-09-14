@@ -114,9 +114,34 @@ const PLANT_DEFS = {
   }
 };
 
+const ALGAE_DEFS = {
+  verde: {
+    nombre: 'Alga Verde',
+    growthPerHour: 0.35,
+    maxSize: 54,
+    nitrateUse: 0.16,
+    color: '#65a30d'
+  },
+  filamentosa: {
+    nombre: 'Alga Filamentosa',
+    growthPerHour: 0.5,
+    maxSize: 72,
+    nitrateUse: 0.22,
+    color: '#84cc16'
+  }
+};
+
+const TIME_SPEEDS = {
+  pausado: 0,
+  lento: 0.5,
+  normal: 1,
+  rapido: 4,
+  muy_rapido: 10
+};
+
 function createDefaultState() {
   return {
-    version: 2,
+    version: 3,
     ancho: 960,
     alto: 620,
     horasJuego: 0,
@@ -124,7 +149,21 @@ function createDefaultState() {
     peces: [],
     invertebrados: [],
     plantas: [],
+    algas: [],
     comida: [],
+    velocidadTiempo: 'normal',
+    calidadAgua: {
+      amonio: 0,
+      nitritos: 0,
+      nitratos: 8,
+      oxigeno: 92,
+      salud: 92
+    },
+    equipos: {
+      filtroActivo: true,
+      oxigenacionActiva: true
+    },
+    reproduccion: {},
     mensajes: [
       {
         autor: 'sistema',
@@ -205,6 +244,20 @@ function createInvertebrate(especie) {
   };
 }
 
+function createAlgae(especie) {
+  const def = ALGAE_DEFS[especie];
+  return {
+    id: id('alga'),
+    especie,
+    nombre: def.nombre,
+    edadEnHoras: 0,
+    tamano: randomBetween(16, 26),
+    x: randomBetween(70, 890),
+    y: randomBetween(500, 555),
+    color: def.color
+  };
+}
+
 function createFood(amount = 8) {
   return Array.from({ length: clamp(amount, 1, 40) }, () => ({
     id: id('comida'),
@@ -249,7 +302,8 @@ export class GameEngine extends EventEmitter {
         peces: Object.keys(FISH_DEFS),
         caracoles: Object.entries(INVERTEBRATE_DEFS).filter(([, def]) => def.grupo === 'caracol').map(([key]) => key),
         gambas: Object.entries(INVERTEBRATE_DEFS).filter(([, def]) => def.grupo === 'gamba').map(([key]) => key),
-        plantas: Object.keys(PLANT_DEFS)
+        plantas: Object.keys(PLANT_DEFS),
+        algas: Object.keys(ALGAE_DEFS)
       },
       config: {
         realSecondsPerGameHour: REAL_SECONDS_PER_GAME_HOUR,
@@ -274,6 +328,11 @@ export class GameEngine extends EventEmitter {
       const cantidad = clamp(Number(action.cantidad || 1), 1, 20);
 
       if (action.tipo === 'COMPRAR_PEZ' && FISH_DEFS[action.especie]) {
+        const compatibility = this.checkCompatibility(cantidad);
+        if (!compatibility.ok) {
+          summary.push(compatibility.message);
+          continue;
+        }
         for (let i = 0; i < cantidad; i += 1) {
           this.state.peces.push(createFish(action.especie));
         }
@@ -288,10 +347,22 @@ export class GameEngine extends EventEmitter {
       }
 
       if (action.tipo === 'COMPRAR_INVERTEBRADO' && INVERTEBRATE_DEFS[action.especie]) {
+        const compatibility = this.checkCompatibility(cantidad);
+        if (!compatibility.ok) {
+          summary.push(compatibility.message);
+          continue;
+        }
         for (let i = 0; i < cantidad; i += 1) {
           this.state.invertebrados.push(createInvertebrate(action.especie));
         }
         summary.push(`${cantidad} invertebrado(s) ${action.especie}`);
+      }
+
+      if (action.tipo === 'AGREGAR_ALGA' && ALGAE_DEFS[action.especie]) {
+        for (let i = 0; i < cantidad; i += 1) {
+          this.state.algas.push(createAlgae(action.especie));
+        }
+        summary.push(`${cantidad} alga(s) ${action.especie}`);
       }
 
       if (action.tipo === 'ALIMENTAR') {
@@ -307,6 +378,15 @@ export class GameEngine extends EventEmitter {
         this.state.invertebrados = this.state.invertebrados.filter((animal) => animal.vivo);
         summary.push(`${removedFish + removedInvertebrates} animal(es) muerto(s) retirado(s)`);
       }
+
+      if (action.tipo === 'CAMBIAR_TIEMPO' && TIME_SPEEDS[action.velocidad] !== undefined) {
+        this.state.velocidadTiempo = action.velocidad;
+        summary.push(`velocidad de tiempo: ${action.velocidad}`);
+      }
+
+      if (action.tipo === 'CONSULTAR_ESTADO') {
+        summary.push(this.buildWaterStatusMessage());
+      }
     }
 
     if (summary.length > 0) {
@@ -318,12 +398,21 @@ export class GameEngine extends EventEmitter {
   }
 
   tick() {
-    const gameHours = (TICK_MS / 1000) / REAL_SECONDS_PER_GAME_HOUR;
+    const speed = TIME_SPEEDS[this.state.velocidadTiempo] ?? 1;
+    const gameHours = ((TICK_MS / 1000) / REAL_SECONDS_PER_GAME_HOUR) * speed;
+    if (gameHours <= 0) {
+      this.state.ultimaActualizacion = new Date().toISOString();
+      this.emitUpdate();
+      return;
+    }
     this.state.horasJuego += gameHours;
     this.updateFood(TICK_MS / 1000);
     this.updateFish(gameHours, TICK_MS / 1000);
     this.updateInvertebrates(gameHours, TICK_MS / 1000);
     this.updatePlants(gameHours);
+    this.updateAlgae(gameHours);
+    this.updateWaterQuality(gameHours);
+    this.updateReproduction();
     this.state.ultimaActualizacion = new Date().toISOString();
     this.emitUpdate();
   }
@@ -333,6 +422,7 @@ export class GameEngine extends EventEmitter {
       food.y += food.vy * deltaSeconds;
       if (food.y > 545) {
         this.state.nutrientes = clamp(this.state.nutrientes + food.nutrientes, 0, 100);
+        this.state.calidadAgua.amonio = clamp(this.state.calidadAgua.amonio + 0.08, 0, 100);
       }
     }
     this.state.comida = this.state.comida.filter((food) => food.y <= 545);
@@ -374,8 +464,79 @@ export class GameEngine extends EventEmitter {
       if (this.state.nutrientes > 0.5) {
         plant.altura = clamp(plant.altura + def.growthPerHour * gameHours, 10, def.maxHeight);
         this.state.nutrientes = clamp(this.state.nutrientes - def.nutrientUse * gameHours, 0, 100);
+        this.state.calidadAgua.nitratos = clamp(this.state.calidadAgua.nitratos - def.nutrientUse * gameHours * 0.8, 0, 100);
       }
     }
+  }
+
+  updateAlgae(gameHours) {
+    for (const algae of this.state.algas) {
+      const def = ALGAE_DEFS[algae.especie];
+      algae.edadEnHoras += gameHours;
+      if (this.state.calidadAgua.nitratos > 1) {
+        algae.tamano = clamp(algae.tamano + def.growthPerHour * gameHours, 8, def.maxSize);
+        this.state.calidadAgua.nitratos = clamp(this.state.calidadAgua.nitratos - def.nitrateUse * gameHours, 0, 100);
+      }
+    }
+  }
+
+  updateWaterQuality(gameHours) {
+    const aliveAnimals = this.state.peces.filter((fish) => fish.vivo).length + this.state.invertebrados.filter((animal) => animal.vivo).length;
+    const deadAnimals = this.state.peces.filter((fish) => !fish.vivo).length + this.state.invertebrados.filter((animal) => !animal.vivo).length;
+    const plants = this.state.plantas.length + this.state.algas.length;
+    const quality = this.state.calidadAgua;
+
+    quality.amonio = clamp(quality.amonio + aliveAnimals * 0.018 * gameHours + deadAnimals * 0.12 * gameHours, 0, 100);
+
+    if (this.state.equipos.filtroActivo) {
+      const convertedAmmonia = Math.min(quality.amonio, 1.8 * gameHours);
+      quality.amonio = clamp(quality.amonio - convertedAmmonia, 0, 100);
+      quality.nitritos = clamp(quality.nitritos + convertedAmmonia * 0.6, 0, 100);
+
+      const convertedNitrites = Math.min(quality.nitritos, 1.3 * gameHours);
+      quality.nitritos = clamp(quality.nitritos - convertedNitrites, 0, 100);
+      quality.nitratos = clamp(quality.nitratos + convertedNitrites * 0.85, 0, 100);
+    }
+
+    quality.nitratos = clamp(quality.nitratos - plants * 0.025 * gameHours, 0, 100);
+    quality.oxigeno = clamp(
+      quality.oxigeno + (this.state.equipos.oxigenacionActiva ? 2.2 : -1.2) * gameHours + this.state.plantas.length * 0.02 * gameHours - aliveAnimals * 0.035 * gameHours,
+      0,
+      100
+    );
+
+    quality.salud = clamp(100 - quality.amonio * 1.6 - quality.nitritos * 1.3 - Math.max(0, quality.nitratos - 35) * 0.45 - Math.max(0, 70 - quality.oxigeno) * 1.1, 0, 100);
+
+    if (quality.salud < 25) {
+      for (const fish of this.state.peces) {
+        if (fish.vivo) fish.hambre = clamp(fish.hambre + 4 * gameHours, 0, 100);
+      }
+      for (const animal of this.state.invertebrados) {
+        if (animal.vivo) animal.hambre = clamp(animal.hambre + 3 * gameHours, 0, 100);
+      }
+    }
+  }
+
+  updateReproduction() {
+    if (!this.canReproduce()) return;
+    this.tryReproduce('guppy', this.state.peces.filter((fish) => fish.vivo && fish.tipo === 'guppy'), () => this.state.peces.push(createFish('guppy')));
+    this.tryReproduce('cherry', this.state.invertebrados.filter((animal) => animal.vivo && animal.especie === 'cherry'), () => this.state.invertebrados.push(createInvertebrate('cherry')));
+    this.tryReproduce('planorbis', this.state.invertebrados.filter((animal) => animal.vivo && animal.especie === 'planorbis'), () => this.state.invertebrados.push(createInvertebrate('planorbis')));
+  }
+
+  canReproduce() {
+    return this.state.calidadAgua.salud >= 72 && this.state.calidadAgua.oxigeno >= 70 && this.totalAnimals() < 45;
+  }
+
+  tryReproduce(key, candidates, createBaby) {
+    if (candidates.length < 2) return;
+    if (candidates.some((animal) => animal.hambre > 35 || animal.edadEnHoras < 24)) return;
+    const lastBirth = this.state.reproduccion[key] || 0;
+    if (this.state.horasJuego - lastBirth < 48) return;
+    if (Math.random() > 0.025) return;
+    createBaby();
+    this.state.reproduccion[key] = this.state.horasJuego;
+    this.addChatMessage('sistema', `Buenas condiciones: nacio una cria de ${key}.`);
   }
 
   updateInvertebrates(gameHours, deltaSeconds) {
@@ -411,6 +572,14 @@ export class GameEngine extends EventEmitter {
           this.state.nutrientes = clamp(this.state.nutrientes + 0.35, 0, 100);
           this.state.comida = this.state.comida.filter((food) => food.id !== targetFood.id);
         }
+      } else if (this.state.algas.length > 0) {
+        const targetAlgae = this.findNearestAlgae(animal);
+        this.moveBottomAnimalTowards(animal, targetAlgae, def.speed, deltaSeconds);
+        if (Math.hypot(animal.x - targetAlgae.x, animal.y - targetAlgae.y) < 22 * animal.escala) {
+          targetAlgae.tamano = clamp(targetAlgae.tamano - 8 * gameHours, 0, targetAlgae.tamano);
+          animal.hambre = clamp(animal.hambre - 10 * gameHours, 0, 100);
+          this.state.algas = this.state.algas.filter((algae) => algae.tamano > 4);
+        }
       } else {
         this.wanderBottomAnimal(animal, def.speed, deltaSeconds);
       }
@@ -438,6 +607,19 @@ export class GameEngine extends EventEmitter {
     }
 
     return nearestDistance <= 260 ? nearest : null;
+  }
+
+  findNearestAlgae(animal) {
+    let nearest = this.state.algas[0];
+    let nearestDistance = Infinity;
+    for (const algae of this.state.algas) {
+      const distance = Math.hypot(animal.x - algae.x, animal.y - algae.y);
+      if (distance < nearestDistance) {
+        nearest = algae;
+        nearestDistance = distance;
+      }
+    }
+    return nearest;
   }
 
   removeConsumedCorpses() {
@@ -526,11 +708,47 @@ export class GameEngine extends EventEmitter {
     fish.y = clamp(fish.y, 76, this.state.alto - 98);
   }
 
+  totalAnimals() {
+    return this.state.peces.length + this.state.invertebrados.length;
+  }
+
+  checkCompatibility(amount) {
+    if (this.totalAnimals() + amount > 45) {
+      return { ok: false, message: 'No se agrego: el acuario ya esta cerca de su limite biologico.' };
+    }
+    if (this.state.calidadAgua.salud < 35) {
+      return { ok: false, message: 'No se agrego: la calidad del agua es baja; estabiliza el acuario primero.' };
+    }
+    return { ok: true, message: 'compatible' };
+  }
+
+  buildWaterStatusMessage() {
+    const water = this.state.calidadAgua;
+    return `Agua: salud ${Math.round(water.salud)}%, amonio ${Math.round(water.amonio)}%, nitritos ${Math.round(water.nitritos)}%, nitratos ${Math.round(water.nitratos)}%, oxigeno ${Math.round(water.oxigeno)}%.`;
+  }
+
   normalizeState() {
     this.state.invertebrados = Array.isArray(this.state.invertebrados) ? this.state.invertebrados : [];
+    this.state.algas = Array.isArray(this.state.algas) ? this.state.algas : [];
+    this.state.velocidadTiempo = TIME_SPEEDS[this.state.velocidadTiempo] !== undefined ? this.state.velocidadTiempo : 'normal';
+    this.state.calidadAgua = {
+      amonio: 0,
+      nitritos: 0,
+      nitratos: 8,
+      oxigeno: 92,
+      salud: 92,
+      ...(this.state.calidadAgua || {})
+    };
+    this.state.equipos = {
+      filtroActivo: true,
+      oxigenacionActiva: true,
+      ...(this.state.equipos || {})
+    };
+    this.state.reproduccion = this.state.reproduccion || {};
     this.state.peces = this.state.peces.filter((fish) => FISH_DEFS[fish.tipo]);
     this.state.invertebrados = this.state.invertebrados.filter((animal) => INVERTEBRATE_DEFS[animal.especie]);
     this.state.plantas = this.state.plantas.filter((plant) => PLANT_DEFS[plant.especie]);
+    this.state.algas = this.state.algas.filter((algae) => ALGAE_DEFS[algae.especie]);
     this.state.comida = this.state.comida.filter((food) => Number.isFinite(food.x) && Number.isFinite(food.y));
   }
 

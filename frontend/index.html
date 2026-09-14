@@ -22,8 +22,32 @@
             <span><strong id="gameHours">0</strong> h</span>
           </div>
         </header>
-        <div class="canvas-wrap">
-          <canvas id="aquarium" width="960" height="620" aria-label="Acuario virtual animado"></canvas>
+        <div class="aquarium-body">
+          <div class="canvas-wrap">
+            <canvas id="aquarium" width="960" height="620" aria-label="Acuario virtual animado"></canvas>
+          </div>
+          <section class="ecosystem-panel" aria-label="Panel de ecosistema">
+            <div class="time-controls">
+              <strong>Tiempo</strong>
+              <div class="time-buttons">
+                <button type="button" data-speed="pausado">Pausa</button>
+                <button type="button" data-speed="lento">Lento</button>
+                <button type="button" data-speed="normal">Normal</button>
+                <button type="button" data-speed="rapido">Rapido</button>
+                <button type="button" data-speed="muy_rapido">Muy rapido</button>
+              </div>
+              <span>Velocidad: <strong id="timeSpeed">normal</strong></span>
+            </div>
+            <div class="water-panel">
+              <strong>Calidad del agua</strong>
+              <span>Salud <meter id="waterHealth" min="0" max="100" value="92"></meter> <b id="waterHealthText">92%</b></span>
+              <span>Amonio: <b id="ammoniaText">0%</b></span>
+              <span>Nitritos: <b id="nitriteText">0%</b></span>
+              <span>Nitratos: <b id="nitrateText">8%</b></span>
+              <span>Oxigeno: <b id="oxygenText">92%</b></span>
+              <span>Filtro: <b id="filterText">activo</b> · Oxigenacion: <b id="aerationText">activa</b></span>
+            </div>
+          </section>
         </div>
       </section>
 
@@ -40,6 +64,7 @@
           <span>Caracoles: neritina, manzana, planorbis</span>
           <span>Gambas: cherry, amano, fantasma</span>
           <span>Plantas: anubia, ambulia</span>
+          <span>Algas: verde, filamentosa</span>
         </div>
 
         <div id="messages" class="messages" aria-live="polite"></div>
