@@ -4,7 +4,7 @@
   "private": true,
   "description": "Acuario virtual 2D inteligente de agua dulce",
   "scripts": {
-    "start": "bash scripts/start-codespace.sh",
+    "start": "npm --prefix backend start",
     "backend": "cd backend && npm start"
   }
 }

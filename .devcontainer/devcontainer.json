@@ -1,16 +1,12 @@
 {
   "name": "Acuario Virtual Node",
   "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
-  "forwardPorts": [3000, 11434],
+  "forwardPorts": [3000],
   "portsAttributes": {
     "3000": {
       "label": "Acuario Web",
       "onAutoForward": "openPreview"
-    },
-    "11434": {
-      "label": "Ollama"
     }
   },
-  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y zstd && cd backend && npm install && (command -v ollama >/dev/null 2>&1 || curl -fsSL https://ollama.com/install.sh | sh)",
-  "postStartCommand": "(pgrep -x ollama >/dev/null || ollama serve > ollama.log 2>&1 &)"
+  "postCreateCommand": "cd backend && npm install"
 }

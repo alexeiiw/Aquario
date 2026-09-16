@@ -2,6 +2,15 @@
 
 Ideas priorizadas para evolucionar el Acuario Virtual 2D Inteligente.
 
+## Interprete local
+
+El chat funciona sin LLM. El interprete debe seguir creciendo con reglas pequenas y verificables, sin ejecutar acciones cuando falten datos.
+
+- Mantener normalizacion de acentos, sinonimos, plurales y cantidades.
+- Preguntar especie, cantidad o velocidad cuando el mensaje sea incompleto.
+- Mostrar una confirmacion clara para mensajes con varias acciones.
+- Agregar pruebas de frases equivalentes antes de incorporar nuevos alias.
+
 ## Prioridad Alta
 
 ### Inspeccion Por Animal

@@ -9,7 +9,6 @@
     "dev": "node --watch server.js"
   },
   "dependencies": {
-    "ollama": "^0.5.17",
     "express": "^4.19.2",
     "socket.io": "^4.7.5"
   },

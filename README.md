@@ -2,7 +2,7 @@
 
 Version `1.3.0`.
 
-Simulador web estilo Tamagotchi de un acuario 2D de agua dulce. El usuario controla el ecosistema desde un chat en lenguaje natural; el backend interpreta intenciones con Ollama y mantiene la simulacion, persistencia, tiempo, calidad del agua, hambre, crecimiento, reproduccion y compatibilidad de especies.
+Simulador web estilo Tamagotchi de un acuario 2D de agua dulce. El usuario controla el ecosistema desde un chat; un parser local interpreta comandos en espanol y el backend mantiene la simulacion, persistencia, tiempo, calidad del agua, hambre, crecimiento, reproduccion y compatibilidad de especies.
 
 ## Inicio rapido en Codespaces
 
@@ -12,31 +12,11 @@ Desde la raiz del repositorio:
 npm start
 ```
 
-Ese script ejecuta `scripts/start-codespace.sh` y hace lo necesario para levantar todo:
+Ese comando ejecuta directamente el backend y arranca el servidor en `http://localhost:3000`.
 
-- Instala `zstd` si falta.
-- Instala Ollama si falta.
-- Inicia `ollama serve`.
-- Descarga el modelo configurado, por defecto `qwen2.5-coder:3b`.
-- Instala dependencias del backend si falta `node_modules`.
-- Arranca el servidor en `http://localhost:3000`.
-
-Para usar otro modelo:
-
-```bash
-OLLAMA_MODEL=phi3 npm start
-```
+El proyecto no inicia Ollama, no descarga modelos y no necesita servicios externos.
 
 ## Arranque manual
-
-Instalar Ollama en Linux/Codespaces:
-
-```bash
-sudo apt-get update && sudo apt-get install -y zstd
-curl -fsSL https://ollama.com/install.sh | sh
-ollama serve > ollama.log 2>&1 &
-ollama pull qwen2.5-coder:3b
-```
 
 Arrancar solo el backend:
 
@@ -54,14 +34,14 @@ Abrir `http://localhost:3000`.
 backend/
   server.js          Express + Socket.io
   gameEngine.js      Simulacion del ecosistema
-  llmService.js      Intenciones con Ollama + fallback local
+  llmService.js      Parser local de comandos y aclaraciones
   persistence.js     Guardado/carga del estado
 frontend/
   index.html         Interfaz principal
   style.css          Layout visual
   script.js          Canvas, sockets y controles
 scripts/
-  start-codespace.sh Arranque completo con Ollama
+  start-codespace.sh Arranque de Node sin servicios externos
 SUGERENCIAS.md       Roadmap de mejoras propuestas
 ```
 
@@ -88,7 +68,7 @@ rm -f backend/data/aquarium-state.json
 - El panel flotante se puede ocultar/mostrar para ver mejor el acuario.
 - El chat tiene scroll y acepta lenguaje natural.
 - Escribe `menu` para abrir el arbol maestro de ayuda.
-- `menu` no pasa por el LLM: responde directo desde el backend.
+- `menu` responde directo desde el backend.
 - Usa `especies`, `inventario`, `ideas` o `estado` para secciones especificas.
 - Escribe `lista`, `inventario`, `habitantes` o `que peces tengo` para ver lo que vive en el acuario por categorias.
 - El cuadro de texto muestra comandos frecuentes: `menu`, `especies`, `inventario`, `estado`, `alimentar`, `agrega un...`.
@@ -243,6 +223,14 @@ Condiciones generales:
 
 ## Comandos de chat
 
+El chat se interpreta localmente, sin Ollama ni modelos descargados. La logica normaliza acentos, reconoce alias, plurales, cantidades numericas o escritas y permite varias acciones en un mismo mensaje. Si falta informacion, pregunta antes de ejecutar.
+
+Ejemplos de aclaracion:
+
+- `agrega peces` -> pregunta especie y cantidad.
+- `cambia el tiempo` -> pregunta la velocidad.
+- `quiero algo nuevo` -> pide que indiques la categoria, especie y cantidad.
+
 Comandos frecuentes recomendados:
 
 - `menu`
@@ -311,9 +299,15 @@ Ecosistema:
 - `pon el tiempo rapido`
 - `pausa el acuario`
 
+## Codespaces y persistencia
+
+No es necesario regenerar el Codespace para recuperar espacio por retirar Ollama: el proyecto ya no instala, inicia ni descarga ningun modelo. Puedes mantener el Codespace actual y reconstruir el contenedor si quieres limpiar dependencias antiguas.
+
+El estado de la partida se guarda en `backend/data/aquarium-state.json`, que no se versiona. Si borras el Codespace, tambien puedes perder ese estado. Para conservarlo, exportalo manualmente o implementa la mejora de importacion/exportacion propuesta en `SUGERENCIAS.md`.
+
 ## Notas de desarrollo
 
-- El LLM interpreta el chat, pero el movimiento, hambre, agua, crecimiento, compatibilidad y reproduccion los maneja el backend.
-- Si Ollama no responde, existe un fallback local basico para comandos comunes.
+- El parser local interpreta el chat; el movimiento, hambre, agua, crecimiento, compatibilidad y reproduccion los maneja el backend.
+- `backend/llmService.js` conserva su nombre por compatibilidad interna, pero ya no usa un LLM: es un interprete determinista con validacion y aclaraciones.
 - No se deben versionar `backend/data/`, logs, `.env` ni `node_modules`.
 - Ver `SUGERENCIAS.md` para el roadmap de mejoras propuestas.
