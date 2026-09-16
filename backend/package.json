@@ -1,6 +1,6 @@
 {
   "name": "acuario-virtual-backend",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Backend para acuario virtual 2D inteligente estilo Tamagotchi",
   "main": "server.js",
   "type": "module",

@@ -1,6 +1,6 @@
 # Acuario Virtual 2D Inteligente
 
-Version `1.3.0`.
+Version `1.4.0`.
 
 Simulador web estilo Tamagotchi de un acuario 2D de agua dulce. El usuario controla el ecosistema desde un chat; un parser local interpreta comandos en espanol y el backend mantiene la simulacion, persistencia, tiempo, calidad del agua, hambre, crecimiento, reproduccion y compatibilidad de especies.
 
@@ -70,6 +70,8 @@ rm -f backend/data/aquarium-state.json
 - Escribe `menu` para abrir el arbol maestro de ayuda.
 - `menu` responde directo desde el backend.
 - Usa `especies`, `inventario`, `ideas` o `estado` para secciones especificas.
+- Usa `diagnostico` o `alertas` para revisar si el acuario necesita atencion.
+- Usa `cambio de agua 30%` para reducir amonio, nitritos y nitratos.
 - Escribe `lista`, `inventario`, `habitantes` o `que peces tengo` para ver lo que vive en el acuario por categorias.
 - El cuadro de texto muestra comandos frecuentes: `menu`, `especies`, `inventario`, `estado`, `alimentar`, `agrega un...`.
 
@@ -118,6 +120,16 @@ Consulta por chat:
 - `como esta la calidad del agua`
 - `revisa el agua`
 - `estado del acuario`
+- `diagnostico`
+- `alertas`
+
+Las alertas tambien aparecen automaticamente en el panel de calidad del agua y en el chat cuando cambian los niveles de riesgo. Una pregunta como `¿el acuario necesita un cambio de agua?` consulta el diagnostico sin ejecutar ninguna accion.
+
+Cambio de agua:
+
+- `cambio de agua`: realiza un cambio del `20%` por defecto.
+- `cambio de agua 30%`: permite indicar el porcentaje.
+- El motor limita cada cambio entre `5%` y `80%` para evitar cambios extremos.
 
 ## Especies
 
@@ -133,6 +145,11 @@ Peces de agua dulce:
 - `platy`: pez comunitario colorido.
 - `xipho`: cola de espada.
 - `otocinclus`: pequeno comealgas.
+- `rasbora`: rasbora arlequin, pez de cardumen.
+- `tetra`: tetra cardenal, pez de cardumen.
+- `ramirezi`: pez pequeno territorial que necesita un entorno estable.
+- `gourami`: gourami enano, territorial; se mantiene uno por acuario.
+- `ancistrus`: pez de fondo y consumidor de algas.
 
 Caracoles:
 
@@ -166,11 +183,14 @@ Reglas actuales:
 
 - Maximo biologico aproximado: `45` animales.
 - Si la calidad del agua es baja, no se agregan animales nuevos.
+- `rasbora` y `tetra` requieren un cardumen minimo de `6` ejemplares.
 - Solo un `betta` por acuario.
 - `betta` no se permite con `guppy`.
 - `betta` puede atacar gambas pequenas (`cherry`, `fantasma`).
-- `angel` adulto puede depredar `neon`, `cherry` o `fantasma`.
-- `betta` y `angel` no son excluyentes entre si en esta simulacion, pero ambos requieren vigilar compatibilidad con especies pequenas.
+- `angel` adulto puede depredar `neon`, `tetra`, `rasbora`, `cherry` o `fantasma`.
+- `gourami` se limita a un ejemplar y no convive con `betta` o `ramirezi`.
+- `ramirezi` no se combina con `betta`, `gourami`, `angel` ni otro `ramirezi`.
+- `ancistrus` ocupa el espacio de fondo y puede pastar algas.
 
 Si una compra se rechaza, el chat explica el motivo.
 
@@ -184,7 +204,7 @@ Alimentar:
 
 Alimento natural del ecosistema:
 
-- `otocinclus`, `molly`, `platy` y `xipho` pueden pastar algas.
+- `otocinclus`, `ancistrus`, `molly`, `platy` y `xipho` pueden pastar algas.
 - `corydora`, `guppy`, `molly`, `platy` y `xipho` pueden aprovechar detrito/biofilm del sustrato si hay nutrientes disponibles.
 - Caracoles y gambas pueden comer algas, biofilm, detrito y cadaveres cercanos.
 - Plantas y algas ayudan a estabilizar el agua, pero no sustituyen por completo la alimentacion manual.
@@ -239,6 +259,9 @@ Comandos frecuentes recomendados:
 - `estado`
 - `ideas`
 - `alimentar`
+- `diagnostico`
+- `alertas`
+- `cambio de agua 30%`
 - `agrega un betta`
 
 Conversacion guiada:

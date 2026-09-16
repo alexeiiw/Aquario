@@ -15,21 +15,21 @@ El chat funciona sin LLM. El interprete debe seguir creciendo con reglas pequena
 
 ### Inspeccion Por Animal
 
-- Click sobre pez, caracol o gamba para ver especie, edad, hambre, salud, estado y tamano.
+- Pendiente: click sobre pez, caracol o gamba para ver especie, edad, hambre, salud, estado y tamano.
 - Mostrar si esta vivo, hambriento, en hambruna, muerto o consumiendo alimento natural.
 - Mostrar advertencias de compatibilidad por individuo.
 
 ### Diagnostico Del Ecosistema
 
-- Comando `diagnostico` con recomendaciones claras.
-- Ejemplos: alimentar menos, agregar plantas, limpiar muertos, revisar sobrepoblacion, cambiar velocidad.
-- Panel con alertas visuales cuando suban amonio, nitritos o baje oxigeno.
+- Implementado: comando `diagnostico` con recomendaciones claras.
+- Implementado: alertas visuales cuando suban amonio, nitritos o nitratos, o baje el oxigeno.
+- Pendiente: recomendaciones especificas sobre sobrepoblacion y velocidad.
 
 ### Cambios De Agua
 
-- Comandos como `cambio de agua 30%`.
-- Reducir amonio, nitritos y nitratos.
-- Penalizar cambios demasiado grandes por estres.
+- Implementado: comandos como `cambio de agua 30%`.
+- Implementado: reduccion de amonio, nitritos y nitratos.
+- Pendiente: penalizar cambios demasiado grandes por estres.
 
 ### Filtro Mas Realista
 
@@ -59,9 +59,9 @@ El chat funciona sin LLM. El interprete debe seguir creciendo con reglas pequena
 
 ### Mejor Render Por Especie
 
-- Sprites simples o siluetas mas realistas por especie.
-- Diferenciar claramente betta, angel, guppy, molly, corydora y otocinclus.
-- Animaciones de aletas y movimiento por comportamiento.
+- Implementado: siluetas diferenciadas para peces principales y nuevas especies.
+- Implementado: render especifico para betta, angel, guppy, neon, molly, platy, xipho, corydora, otocinclus, rasbora, tetra, ramirezi, gourami y ancistrus.
+- Pendiente: animaciones de aletas y movimiento por comportamiento.
 
 ## Prioridad Baja
 
