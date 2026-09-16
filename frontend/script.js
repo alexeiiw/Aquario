@@ -45,6 +45,12 @@ form.addEventListener('submit', (event) => {
   setTimeout(() => setFormBusy(false), 12000);
 });
 
+input.addEventListener('keydown', (event) => {
+  if (event.key !== 'Enter' || event.shiftKey) return;
+  event.preventDefault();
+  form.requestSubmit();
+});
+
 document.querySelectorAll('[data-speed]').forEach((button) => {
   button.addEventListener('click', () => {
     socket.emit('chat:message', `cambia el tiempo a ${button.dataset.speed.replace('_', ' ')}`);
