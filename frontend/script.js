@@ -19,6 +19,7 @@ const nitrateTextEl = document.querySelector('#nitrateText');
 const oxygenTextEl = document.querySelector('#oxygenText');
 const filterTextEl = document.querySelector('#filterText');
 const aerationTextEl = document.querySelector('#aerationText');
+const waterAlertsEl = document.querySelector('#waterAlerts');
 const ecosystemPanelEl = document.querySelector('.ecosystem-panel');
 const ecosystemToggleEl = document.querySelector('#ecosystemToggle');
 
@@ -98,6 +99,9 @@ function renderStats() {
   oxygenTextEl.textContent = `${Math.round(water.oxigeno)}%`;
   filterTextEl.textContent = state.equipos.filtroActivo ? 'activo' : 'apagado';
   aerationTextEl.textContent = state.equipos.oxigenacionActiva ? 'activa' : 'apagada';
+  waterAlertsEl.innerHTML = state.alertas?.length
+    ? state.alertas.map((alert) => `<span class="water-alert ${escapeHtml(alert.severidad)}">${escapeHtml(alert.texto)}</span>`).join('')
+    : '<span class="water-ok">Sin alertas activas</span>';
 }
 
 function renderMessages() {
@@ -349,6 +353,22 @@ function drawFish() {
       drawAngelFish(fish, size);
     } else if (fish.tipo === 'betta') {
       drawBettaFish(fish, size);
+    } else if (fish.tipo === 'guppy') {
+      drawGuppyFish(fish, size);
+    } else if (fish.tipo === 'neon') {
+      drawNeonFish(fish, size);
+    } else if (['molly', 'platy'].includes(fish.tipo)) {
+      drawLivebearerFish(fish, size);
+    } else if (fish.tipo === 'xipho') {
+      drawSwordtailFish(fish, size);
+    } else if (['rasbora', 'tetra'].includes(fish.tipo)) {
+      drawSchoolFish(fish, size);
+    } else if (fish.tipo === 'ramirezi') {
+      drawRamireziFish(fish, size);
+    } else if (fish.tipo === 'gourami') {
+      drawGouramiFish(fish, size);
+    } else if (fish.tipo === 'ancistrus') {
+      drawAncistrusFish(fish, size);
     } else if (['corydora', 'otocinclus'].includes(fish.tipo)) {
       drawBottomFish(fish, size);
     } else {
@@ -357,6 +377,112 @@ function drawFish() {
 
     drawHungerBar(fish, size);
     ctx.restore();
+  }
+}
+
+function drawGuppyFish(fish, size) {
+  drawGenericFish(fish, size * 0.82);
+  ctx.fillStyle = fish.accent;
+  ctx.beginPath();
+  ctx.moveTo(-size * 0.72, 0);
+  ctx.lineTo(-size * 1.75, -size * 0.85);
+  ctx.lineTo(-size * 1.65, size * 0.7);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawNeonFish(fish, size) {
+  drawGenericFish(fish, size * 0.72);
+  ctx.strokeStyle = '#e0f2fe';
+  ctx.lineWidth = Math.max(2, size * 0.12);
+  ctx.beginPath();
+  ctx.moveTo(-size * 0.45, -size * 0.18);
+  ctx.lineTo(size * 0.5, -size * 0.18);
+  ctx.stroke();
+  ctx.strokeStyle = fish.accent;
+  ctx.beginPath();
+  ctx.moveTo(-size * 0.28, size * 0.1);
+  ctx.lineTo(size * 0.5, size * 0.1);
+  ctx.stroke();
+}
+
+function drawLivebearerFish(fish, size) {
+  drawGenericFish(fish, size * 0.9);
+  ctx.fillStyle = fish.accent;
+  ctx.beginPath();
+  ctx.moveTo(-size * 0.15, -size * 0.42);
+  ctx.lineTo(size * 0.15, -size * 0.95);
+  ctx.lineTo(size * 0.42, -size * 0.35);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawSwordtailFish(fish, size) {
+  drawGenericFish(fish, size * 0.9);
+  ctx.strokeStyle = fish.accent;
+  ctx.lineWidth = Math.max(2, size * 0.1);
+  ctx.beginPath();
+  ctx.moveTo(-size * 1.1, 0);
+  ctx.lineTo(-size * 2, -size * 0.7);
+  ctx.moveTo(-size * 1.1, 0);
+  ctx.lineTo(-size * 2, size * 0.7);
+  ctx.stroke();
+}
+
+function drawSchoolFish(fish, size) {
+  drawGenericFish(fish, size * 0.78);
+  ctx.fillStyle = fish.accent;
+  ctx.beginPath();
+  ctx.moveTo(-size * 0.3, -size * 0.4);
+  ctx.lineTo(size * 0.12, -size * 0.88);
+  ctx.lineTo(size * 0.35, -size * 0.32);
+  ctx.closePath();
+  ctx.fill();
+  if (fish.tipo === 'tetra') {
+    ctx.strokeStyle = '#fef08a';
+    ctx.lineWidth = Math.max(1.5, size * 0.08);
+    ctx.beginPath();
+    ctx.moveTo(-size * 0.35, size * 0.18);
+    ctx.lineTo(size * 0.42, size * 0.18);
+    ctx.stroke();
+  }
+}
+
+function drawRamireziFish(fish, size) {
+  drawGenericFish(fish, size * 0.92);
+  ctx.fillStyle = fish.accent;
+  ctx.beginPath();
+  ctx.arc(size * 0.15, -size * 0.2, size * 0.16, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#fef08a';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(-size * 0.35, -size * 0.38);
+  ctx.lineTo(-size * 0.05, size * 0.35);
+  ctx.stroke();
+}
+
+function drawGouramiFish(fish, size) {
+  drawGenericFish(fish, size);
+  ctx.strokeStyle = fish.accent;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(size * 0.15, size * 0.25);
+  ctx.lineTo(size * 0.2, size * 1.2);
+  ctx.moveTo(size * 0.35, size * 0.25);
+  ctx.lineTo(size * 0.55, size * 1.1);
+  ctx.stroke();
+}
+
+function drawAncistrusFish(fish, size) {
+  drawBottomFish(fish, size * 1.05);
+  ctx.strokeStyle = fish.accent;
+  ctx.lineWidth = 1.5;
+  for (let i = -2; i <= 2; i += 1) {
+    ctx.beginPath();
+    ctx.moveTo(-size * 0.7, i * size * 0.12);
+    ctx.lineTo(-size * 0.95, i * size * 0.12);
+    ctx.stroke();
   }
 }
 
@@ -465,6 +591,21 @@ function drawBottomFish(fish, size) {
   ctx.moveTo(size * 0.65, size * 0.18);
   ctx.lineTo(size * 1.15, size * 0.38);
   ctx.stroke();
+  if (fish.tipo === 'corydora') {
+    ctx.fillStyle = fish.accent;
+    for (let i = -1; i <= 1; i += 1) {
+      ctx.beginPath();
+      ctx.arc(i * size * 0.32, size * 0.1, size * 0.12, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (fish.tipo === 'otocinclus') {
+    ctx.strokeStyle = fish.accent;
+    ctx.lineWidth = Math.max(2, size * 0.1);
+    ctx.beginPath();
+    ctx.moveTo(-size * 0.48, -size * 0.15);
+    ctx.lineTo(size * 0.45, size * 0.22);
+    ctx.stroke();
+  }
   drawFishEye(size);
 }
 

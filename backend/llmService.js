@@ -1,4 +1,4 @@
-const validFish = ['neon', 'guppy', 'betta', 'molly', 'angel', 'cebra', 'corydora', 'platy', 'xipho', 'otocinclus'];
+const validFish = ['neon', 'guppy', 'betta', 'molly', 'angel', 'cebra', 'corydora', 'platy', 'xipho', 'otocinclus', 'rasbora', 'tetra', 'ramirezi', 'gourami', 'ancistrus'];
 const validInvertebrates = ['neritina', 'manzana', 'planorbis', 'cherry', 'amano', 'fantasma'];
 const validPlants = ['anubia', 'ambulia'];
 const validAlgae = ['verde', 'filamentosa'];
@@ -16,6 +16,10 @@ function parseLocalMessage(message, context) {
 
   if (/\b(aliment\w*|comid\w*|dar de comer)\b/.test(text)) actions.push({ tipo: 'ALIMENTAR', cantidad: findQuantity(text) });
   if (/\b(limpi|retir|sac|elimin)\w*\b.*\b(muert|cadaver)\w*\b/.test(text)) actions.push({ tipo: 'LIMPIAR_MUERTOS', cantidad: 1 });
+  const waterChange = text.match(/\b(?:cambio|cambiar|cambia)\s+(?:de\s+)?agua\b(?:\s+(?:(?:del|de)\s+)?(\d{1,2})\s*%)?/);
+  const asksAboutWaterChange = /\b(necesita|necesito|debo|hace falta|conviene)\b/.test(text) && /\bcambio\s+de\s+agua\b/.test(text);
+  if (waterChange && !asksAboutWaterChange) actions.push({ tipo: 'CAMBIAR_AGUA', porcentaje: waterChange[1] ? Number(waterChange[1]) : 20, cantidad: 1 });
+  if (/\b(diagnostico|diagnostica|alertas|alerta)\b/.test(text) || asksAboutWaterChange) actions.push({ tipo: 'DIAGNOSTICO', cantidad: 1 });
   if (/\b(agua|calidad|amonio|nitrito|nitrato|oxigen)\w*\b/.test(text) && /\b(como|revisa|ver|consulta|estado)\b/.test(text)) actions.push({ tipo: 'CONSULTAR_ESTADO', cantidad: 1 });
 
   const speed = findSpeed(text);
@@ -37,7 +41,7 @@ function parseLocalMessage(message, context) {
   }
   return {
     acciones: [],
-    respuesta_chat: 'No identifique una accion dentro del acuario. Puedes pedir peces, invertebrados, plantas, algas, alimento, limpieza, estado del agua o velocidad. Escribe “menu” para ver ejemplos.',
+    respuesta_chat: 'No identifique una accion dentro del acuario. Puedes pedir peces, invertebrados, plantas, algas, alimento, limpieza, diagnostico, cambio de agua, estado del agua o velocidad. Escribe “menu” para ver ejemplos.',
     contexto: null
   };
 }
@@ -59,7 +63,7 @@ function resolvePending(text, pending) {
 }
 
 function findMissingCategory(text) {
-  if (/\b(pez|peces|neon|guppy|betta|molly|angel|escalar|cebra|danio|cory|platy|xipho|otocinclus|oto)\b/.test(text)) return 'pez';
+  if (/\b(pez|peces|neon|guppy|betta|molly|angel|escalar|cebra|danio|cory|platy|xipho|otocinclus|oto|rasbora|arlequin|tetra|cardenal|ramirezi|gourami|ancistrus|pleco)\b/.test(text)) return 'pez';
   if (/\b(invertebrado|caracol|gamba|camar[oó]n|neritina|manzana|planorbis|cherry|amano|fantasma)\b/.test(text)) return 'invertebrado';
   if (/\b(planta|plantas|vegetacion)\b/.test(text)) return 'planta';
   if (/\b(alga|algas)\b/.test(text)) return 'alga';
@@ -69,7 +73,7 @@ function findMissingCategory(text) {
 function clarificationForCategory(category, text) {
   const cantidad = findQuantity(text);
   const questions = {
-    pez: '¿Qué pez deseas agregar? Puedes elegir neon, guppy, betta, molly, angel, cebra, corydora, platy, xipho u otocinclus.',
+    pez: '¿Qué pez deseas agregar? Puedes elegir neon, guppy, betta, molly, angel, cebra, corydora, platy, xipho, otocinclus, rasbora, tetra, ramirezi, gourami o ancistrus.',
     invertebrado: '¿Qué deseas agregar: caracol neritina, manzana, planorbis o gamba cherry, amano o fantasma?',
     planta: '¿Qué planta deseas agregar: anubia o ambulia?',
     alga: '¿Qué tipo de alga deseas agregar: verde o filamentosa?'
@@ -93,7 +97,9 @@ function speciesAliases(species) {
     angel: ['angel', 'angeles', 'escalar'], cebra: ['cebra', 'cebras', 'danio', 'danios'],
     corydora: ['corydora', 'corydoras', 'cory'], molly: ['molly', 'mollies', 'mollys'],
     platy: ['platy', 'platys'], xipho: ['xipho', 'xiphos', 'espada'],
-    otocinclus: ['otocinclus', 'otos', 'oto'], cherry: ['cherry', 'cherrys', 'cereza'],
+    otocinclus: ['otocinclus', 'otos', 'oto'], rasbora: ['rasbora', 'rasboras', 'arlequin'],
+    tetra: ['tetra', 'tetras', 'cardenal'], ramirezi: ['ramirezi', 'ramirezis'],
+    gourami: ['gourami', 'gouramis'], ancistrus: ['ancistrus', 'pleco'], cherry: ['cherry', 'cherrys', 'cereza'],
     fantasma: ['fantasma', 'fantasmas', 'ghost'], neritina: ['neritina', 'neritinas'],
     manzana: ['manzana', 'manzanas'], planorbis: ['planorbis'], amano: ['amano', 'amanos'],
     anubia: ['anubia', 'anubias'], ambulia: ['ambulia', 'ambulias'],

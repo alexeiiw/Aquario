@@ -107,6 +107,56 @@ const FISH_DEFS = {
     speed: 20,
     color: '#78716c',
     accent: '#fef3c7'
+  },
+  rasbora: {
+    nombre: 'Rasbora Arlequin',
+    latin: 'Trigonostigma heteromorpha',
+    hungerPerHour: 5,
+    maxScale: 1.05,
+    growthHours: 38,
+    speed: 36,
+    color: '#f59e0b',
+    accent: '#7f1d1d'
+  },
+  tetra: {
+    nombre: 'Tetra Cardenal',
+    latin: 'Paracheirodon axelrodi',
+    hungerPerHour: 5,
+    maxScale: 1,
+    growthHours: 34,
+    speed: 35,
+    color: '#ef4444',
+    accent: '#22d3ee'
+  },
+  ramirezi: {
+    nombre: 'Ramirezi',
+    latin: 'Mikrogeophagus ramirezi',
+    hungerPerHour: 7,
+    maxScale: 1.2,
+    growthHours: 52,
+    speed: 25,
+    color: '#60a5fa',
+    accent: '#facc15'
+  },
+  gourami: {
+    nombre: 'Gourami Enano',
+    latin: 'Trichogaster lalius',
+    hungerPerHour: 6,
+    maxScale: 1.3,
+    growthHours: 58,
+    speed: 22,
+    color: '#38bdf8',
+    accent: '#f43f5e'
+  },
+  ancistrus: {
+    nombre: 'Ancistrus',
+    latin: 'Ancistrus cirrhosus',
+    hungerPerHour: 4,
+    maxScale: 1.25,
+    growthHours: 64,
+    speed: 15,
+    color: '#57534e',
+    accent: '#d6d3d1'
   }
 };
 
@@ -382,6 +432,7 @@ export class GameEngine extends EventEmitter {
   getPublicState() {
     return {
       ...this.state,
+      alertas: this.getWaterAlerts(),
       especies: {
         peces: Object.keys(FISH_DEFS),
         caracoles: Object.entries(INVERTEBRATE_DEFS).filter(([, def]) => def.grupo === 'caracol').map(([key]) => key),
@@ -412,6 +463,7 @@ export class GameEngine extends EventEmitter {
     if (/^(ideas|ejemplos|sugerencias)$/.test(text)) return this.buildIdeasMessage();
     if (/^(lista|inventario|habitantes|categorias|categor[ií]as)$/.test(text)) return this.buildInventoryMessage();
     if (/^(estado|agua|calidad)$/.test(text)) return this.buildWaterStatusMessage();
+    if (/^(diagnostico|diagnóstico|alertas|alerta)$/.test(text)) return this.buildDiagnosticMessage();
     return null;
   }
 
@@ -480,6 +532,22 @@ export class GameEngine extends EventEmitter {
 
       if (action.tipo === 'CONSULTAR_ESTADO') {
         summary.push(this.buildWaterStatusMessage());
+      }
+
+      if (action.tipo === 'DIAGNOSTICO') {
+        summary.push(this.buildDiagnosticMessage());
+      }
+
+      if (action.tipo === 'CAMBIAR_AGUA') {
+        const percentage = clamp(Number(action.porcentaje || 20), 5, 80);
+        const remaining = 1 - percentage / 100;
+        const water = this.state.calidadAgua;
+        water.amonio = clamp(water.amonio * remaining, 0, 100);
+        water.nitritos = clamp(water.nitritos * remaining, 0, 100);
+        water.nitratos = clamp(water.nitratos * remaining, 0, 100);
+        water.oxigeno = clamp(water.oxigeno + percentage * 0.08, 0, 100);
+        this.recalculateWaterHealth();
+        summary.push(`cambio de agua del ${percentage}% realizado`);
       }
 
       if (action.tipo === 'AYUDA') {
@@ -573,7 +641,7 @@ export class GameEngine extends EventEmitter {
     const detritusAvailable = this.state.nutrientes > 8;
     let hungerReduction = 0;
 
-    if (['otocinclus', 'molly', 'platy', 'xipho'].includes(fish.tipo) && algaeAvailable) {
+    if (['otocinclus', 'ancistrus', 'molly', 'platy', 'xipho'].includes(fish.tipo) && algaeAvailable) {
       hungerReduction += 5 * gameHours;
       this.grazeAlgae(3 * gameHours);
     }
@@ -670,6 +738,28 @@ export class GameEngine extends EventEmitter {
         if (animal.vivo) animal.hambre = clamp(animal.hambre + 1.2 * gameHours, 0, 100);
       }
     }
+
+    const alertSignature = this.getWaterAlerts().map((alert) => alert.tipo).join('|');
+    if (alertSignature !== this.lastAlertSignature) {
+      if (alertSignature) this.addChatMessage('sistema', `Alerta del acuario: ${this.getWaterAlerts().map((alert) => alert.texto).join(' ')}`);
+      this.lastAlertSignature = alertSignature;
+    }
+  }
+
+  recalculateWaterHealth() {
+    const water = this.state.calidadAgua;
+    water.salud = clamp(100 - water.amonio * 1.6 - water.nitritos * 1.3 - Math.max(0, water.nitratos - 35) * 0.45 - Math.max(0, 70 - water.oxigeno) * 1.1, 0, 100);
+  }
+
+  getWaterAlerts() {
+    const water = this.state.calidadAgua;
+    const alerts = [];
+    if (water.amonio >= 25) alerts.push({ tipo: 'amonio', severidad: 'alta', texto: 'El amonio esta elevado: haz un cambio de agua y reduce la comida.' });
+    if (water.nitritos >= 15) alerts.push({ tipo: 'nitritos', severidad: 'alta', texto: 'Los nitritos estan elevados: revisa el filtro y cambia agua.' });
+    if (water.nitratos >= 40) alerts.push({ tipo: 'nitratos', severidad: 'media', texto: 'Los nitratos estan altos: conviene cambiar agua y revisar las algas.' });
+    if (water.oxigeno < 60) alerts.push({ tipo: 'oxigeno', severidad: 'alta', texto: 'El oxigeno esta bajo: activa la oxigenacion.' });
+    if (water.salud < 55) alerts.push({ tipo: 'salud', severidad: 'alta', texto: 'La salud del agua es baja: evita introducir animales nuevos.' });
+    return alerts;
   }
 
   updateReproduction() {
@@ -904,6 +994,12 @@ export class GameEngine extends EventEmitter {
     const aliveFishTypes = this.state.peces.filter((fish) => fish.vivo).map((fish) => fish.tipo);
     const aliveShrimpTypes = this.state.invertebrados.filter((animal) => animal.vivo && animal.grupo === 'gamba').map((animal) => animal.especie);
     const smallShrimpPresent = aliveShrimpTypes.some((type) => ['cherry', 'fantasma'].includes(type));
+    const schoolingSpecies = ['rasbora', 'tetra'];
+    const existingSchoolCount = this.state.peces.filter((fish) => fish.vivo && fish.tipo === species).length;
+
+    if (schoolingSpecies.includes(species) && existingSchoolCount + amount < 6) {
+      return { ok: false, message: `No se agrego: ${species} necesita un cardumen de al menos 6 ejemplares.` };
+    }
 
     if (species === 'betta') {
       if (aliveFishTypes.includes('betta') || amount > 1) {
@@ -926,13 +1022,30 @@ export class GameEngine extends EventEmitter {
     }
 
     if (species === 'angel') {
-      if (aliveFishTypes.includes('neon') || smallShrimpPresent) {
-        return { ok: false, message: 'No se agrego: el pez angel adulto puede depredar neones o gambas pequenas.' };
+      if (aliveFishTypes.some((type) => ['neon', 'tetra', 'rasbora'].includes(type)) || smallShrimpPresent) {
+        return { ok: false, message: 'No se agrego: el pez angel adulto puede depredar peces pequenos de cardumen o gambas pequenas.' };
       }
     }
 
-    if ((species === 'neon' || ['cherry', 'fantasma'].includes(species)) && aliveFishTypes.includes('angel')) {
-      return { ok: false, message: 'No se agrego: ya hay pez angel y podria depredar neones o gambas pequenas.' };
+    if ((['neon', 'tetra', 'rasbora'].includes(species) || ['cherry', 'fantasma'].includes(species)) && aliveFishTypes.includes('angel')) {
+      return { ok: false, message: 'No se agrego: ya hay pez angel y podria depredar peces pequenos o gambas pequenas.' };
+    }
+
+    if (species === 'gourami') {
+      if (aliveFishTypes.includes('gourami') || amount > 1) {
+        return { ok: false, message: 'No se agrego: el gourami enano es territorial; manten solo uno en este acuario.' };
+      }
+      if (aliveFishTypes.some((type) => ['betta', 'ramirezi'].includes(type))) {
+        return { ok: false, message: 'No se agrego: gourami, betta y ramirezi pueden competir por territorio.' };
+      }
+    }
+
+    if (species === 'betta' && aliveFishTypes.some((type) => ['gourami', 'ramirezi'].includes(type))) {
+      return { ok: false, message: 'No se agrego: el betta puede entrar en conflicto con gouramis o ramirezi.' };
+    }
+
+    if (species === 'ramirezi' && aliveFishTypes.some((type) => ['betta', 'gourami', 'angel', 'ramirezi'].includes(type))) {
+      return { ok: false, message: 'No se agrego: el ramirezi necesita un territorio tranquilo y puede conflictuar con betta, gourami o angel.' };
     }
 
     return { ok: true, message: 'compatible' };
@@ -940,11 +1053,19 @@ export class GameEngine extends EventEmitter {
 
   buildWaterStatusMessage() {
     const water = this.state.calidadAgua;
-    return `Agua: salud ${Math.round(water.salud)}%, amonio ${Math.round(water.amonio)}%, nitritos ${Math.round(water.nitritos)}%, nitratos ${Math.round(water.nitratos)}%, oxigeno ${Math.round(water.oxigeno)}%.`;
+    const alerts = this.getWaterAlerts();
+    const alertText = alerts.length > 0 ? ` Alertas: ${alerts.map((alert) => alert.texto).join(' ')}` : ' No hay alertas activas.';
+    return `Agua: salud ${Math.round(water.salud)}%, amonio ${Math.round(water.amonio)}%, nitritos ${Math.round(water.nitritos)}%, nitratos ${Math.round(water.nitratos)}%, oxigeno ${Math.round(water.oxigeno)}%.${alertText}`;
+  }
+
+  buildDiagnosticMessage() {
+    const alerts = this.getWaterAlerts();
+    if (alerts.length === 0) return 'Diagnostico: el agua esta estable. No hay alertas activas ni necesitas un cambio de agua ahora.';
+    return `Diagnostico: ${alerts.map((alert) => alert.texto).join(' ')}`;
   }
 
   buildHelpMessage() {
-    return 'Ayuda: lista o inventario para ver habitantes por categoria. Peces: neon, guppy, betta, molly, angel/escalar, cebra, corydora, platy, xipho, otocinclus. Invertebrados: caracoles neritina/manzana/planorbis y gambas cherry/amano/fantasma. Flora: plantas anubia/ambulia y algas verde/filamentosa. Ecosistema: alimenta, limpia muertos, calidad del agua, pausa, tiempo rapido/muy rapido/lento/normal.';
+    return 'Ayuda: lista o inventario para ver habitantes por categoria. Peces: neon, guppy, betta, molly, angel/escalar, cebra, corydora, platy, xipho, otocinclus, rasbora, tetra, ramirezi, gourami y ancistrus. Invertebrados: caracoles neritina/manzana/planorbis y gambas cherry/amano/fantasma. Flora: plantas anubia/ambulia y algas verde/filamentosa. Ecosistema: alimenta, limpia muertos, calidad del agua, pausa, tiempo rapido/muy rapido/lento/normal.';
   }
 
   buildMasterMenuMessage() {
@@ -968,7 +1089,7 @@ export class GameEngine extends EventEmitter {
       'Gambas: cherry, amano, fantasma.',
       'Plantas: anubia, ambulia.',
       'Algas: verde, filamentosa.',
-      'Alias: beta=betta, escalar/pez angel=angel, danio=cebra, oto=otocinclus.'
+      'Alias: beta=betta, escalar/pez angel=angel, danio=cebra, oto=otocinclus, arlequin=rasbora, cardinal=tetra, pleco=ancistrus.'
     ].join(' ');
   }
 
@@ -1035,6 +1156,7 @@ export class GameEngine extends EventEmitter {
       ...(this.state.equipos || {})
     };
     this.state.reproduccion = this.state.reproduccion || {};
+    this.lastAlertSignature = null;
     this.state.peces = this.state.peces.filter((fish) => FISH_DEFS[fish.tipo]);
     this.state.invertebrados = this.state.invertebrados.filter((animal) => INVERTEBRATE_DEFS[animal.especie]);
     this.state.plantas = this.state.plantas.filter((plant) => PLANT_DEFS[plant.especie]);
