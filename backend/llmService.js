@@ -11,7 +11,7 @@ function parseLocalMessage(message) {
   const text = normalizeText(message);
   const actions = [];
 
-  if (/\b(aliment|comid|dar de comer)\b/.test(text)) actions.push({ tipo: 'ALIMENTAR', cantidad: findQuantity(text) });
+  if (/\b(aliment\w*|comid\w*|dar de comer)\b/.test(text)) actions.push({ tipo: 'ALIMENTAR', cantidad: findQuantity(text) });
   if (/\b(limpi|retir|sac|elimin)\w*\b.*\b(muert|cadaver)\w*\b/.test(text)) actions.push({ tipo: 'LIMPIAR_MUERTOS', cantidad: 1 });
   if (/\b(agua|calidad|amonio|nitrito|nitrato|oxigen)\w*\b/.test(text) && /\b(como|revisa|ver|consulta|estado)\b/.test(text)) actions.push({ tipo: 'CONSULTAR_ESTADO', cantidad: 1 });
 
