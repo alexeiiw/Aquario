@@ -241,6 +241,14 @@ Comandos frecuentes recomendados:
 - `alimentar`
 - `agrega un betta`
 
+Conversacion guiada:
+
+- `agrega una alga` -> pregunta si deseas alga verde o filamentosa.
+- `verde` -> completa la pregunta anterior y agrega el alga.
+- `agrega peces` -> pregunta la especie disponible.
+- `cambia el tiempo` -> pregunta la velocidad.
+- El contexto de aclaracion dura solo durante la conexion actual y se limpia al completar la accion o consultar el menu.
+
 Ayuda:
 
 - `menu`

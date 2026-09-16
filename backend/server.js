@@ -31,6 +31,7 @@ app.get('/api/health', (_req, res) => {
 });
 
 io.on('connection', (socket) => {
+  socket.chatContext = null;
   socket.emit('state:update', game.getPublicState());
 
   socket.on('chat:message', async (text, callback) => {
@@ -43,6 +44,7 @@ io.on('connection', (socket) => {
     try {
       const localReply = game.resolveLocalCommand(message);
       if (localReply) {
+        socket.chatContext = null;
         game.addChatMessage('ia', localReply);
         io.emit('chat:reply', { acciones: [], respuesta_chat: localReply });
         io.emit('state:update', game.getPublicState());
@@ -50,7 +52,8 @@ io.on('connection', (socket) => {
         return;
       }
 
-      const result = await interpretUserMessage(message);
+      const result = await interpretUserMessage(message, socket.chatContext);
+      socket.chatContext = result.contexto ? { pending: result.contexto } : null;
       const engineSummary = game.applyActions(result.acciones);
       const engineText = engineSummary.length > 0 ? ` ${engineSummary.join('. ')}.` : '';
       const reply = `${result.respuesta_chat}${engineText}`.slice(0, 700);
