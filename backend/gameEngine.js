@@ -6,6 +6,8 @@ const REAL_SECONDS_PER_GAME_HOUR = Number(process.env.REAL_SECONDS_PER_GAME_HOUR
 const SAVE_EVERY_MS = Number(process.env.SAVE_EVERY_MS ?? 5000);
 const HUNGER_RATE_MULTIPLIER = Number(process.env.HUNGER_RATE_MULTIPLIER ?? 0.35);
 const STARVATION_GRACE_HOURS = Number(process.env.STARVATION_GRACE_HOURS ?? 10);
+const SCHOOLING_SPECIES = ['neon', 'cebra', 'rasbora', 'tetra'];
+const SEXED_REPRODUCTION = ['guppy', 'cherry'];
 
 const FISH_DEFS = {
   neon: {
@@ -263,6 +265,39 @@ const ALGAE_DEFS = {
   }
 };
 
+const WOOD_DEFS = {
+  mopani: {
+    nombre: 'Madera Mopani',
+    color: '#7c3f1d',
+    accent: '#3f1f0f',
+    tannins: 0.08
+  },
+  manzanita: {
+    nombre: 'Rama Manzanita',
+    color: '#9a5a2f',
+    accent: '#5c2e16',
+    tannins: 0.04
+  },
+  spider: {
+    nombre: 'Spider Wood',
+    color: '#b06a35',
+    accent: '#6b3518',
+    tannins: 0.03
+  },
+  cholla: {
+    nombre: 'Cholla Wood',
+    color: '#c08a4b',
+    accent: '#6f4a22',
+    tannins: 0.02
+  },
+  manglar: {
+    nombre: 'Raiz de Manglar',
+    color: '#6b3518',
+    accent: '#2f160a',
+    tannins: 0.06
+  }
+};
+
 const TIME_SPEEDS = {
   pausado: 0,
   lento: 0.5,
@@ -273,7 +308,7 @@ const TIME_SPEEDS = {
 
 function createDefaultState() {
   return {
-    version: 3,
+    version: 4,
     ancho: 960,
     alto: 620,
     horasJuego: 0,
@@ -282,6 +317,7 @@ function createDefaultState() {
     invertebrados: [],
     plantas: [],
     algas: [],
+    maderas: [],
     comida: [],
     velocidadTiempo: 'normal',
     calidadAgua: {
@@ -299,7 +335,7 @@ function createDefaultState() {
     mensajes: [
       {
         autor: 'sistema',
-        texto: 'Acuario de agua dulce listo. Pide peces, caracoles, gambas, plantas, comida o limpieza desde el chat.',
+        texto: 'Acuario de agua dulce listo. Pide peces, caracoles, gambas, plantas, maderas, comida o limpieza desde el chat.',
         fecha: new Date().toISOString()
       }
     ],
@@ -319,13 +355,14 @@ function randomBetween(min, max) {
   return min + Math.random() * (max - min);
 }
 
-function createFish(tipo) {
+function createFish(tipo, sexo = chooseSex(tipo)) {
   const def = FISH_DEFS[tipo];
   return {
     id: id('pez'),
     tipo,
     nombre: def.nombre,
     latin: def.latin,
+    sexo,
     edadEnHoras: 0,
     escala: 0.45,
     hambre: 8,
@@ -355,7 +392,7 @@ function createPlant(especie) {
   };
 }
 
-function createInvertebrate(especie) {
+function createInvertebrate(especie, sexo = chooseSex(especie)) {
   const def = INVERTEBRATE_DEFS[especie];
   return {
     id: id(def.grupo),
@@ -363,6 +400,7 @@ function createInvertebrate(especie) {
     grupo: def.grupo,
     nombre: def.nombre,
     latin: def.latin,
+    sexo,
     edadEnHoras: 0,
     escala: 0.45,
     hambre: 6,
@@ -390,6 +428,29 @@ function createAlgae(especie) {
     y: randomBetween(500, 555),
     color: def.color
   };
+}
+
+function createWood(especie) {
+  const def = WOOD_DEFS[especie];
+  return {
+    id: id('madera'),
+    especie,
+    nombre: def.nombre,
+    x: randomBetween(130, 820),
+    y: randomBetween(525, 565),
+    rotacion: randomBetween(-0.35, 0.35),
+    escala: randomBetween(0.85, 1.25),
+    color: def.color,
+    accent: def.accent,
+    tannins: def.tannins
+  };
+}
+
+function chooseSex(species, index = null) {
+  if (species === 'planorbis') return 'hermafrodita';
+  if (!SEXED_REPRODUCTION.includes(species) && !FISH_DEFS[species]) return null;
+  if (index !== null) return index % 2 === 0 ? 'hembra' : 'macho';
+  return Math.random() > 0.5 ? 'hembra' : 'macho';
 }
 
 function createFood(amount = 8) {
@@ -438,7 +499,8 @@ export class GameEngine extends EventEmitter {
         caracoles: Object.entries(INVERTEBRATE_DEFS).filter(([, def]) => def.grupo === 'caracol').map(([key]) => key),
         gambas: Object.entries(INVERTEBRATE_DEFS).filter(([, def]) => def.grupo === 'gamba').map(([key]) => key),
         plantas: Object.keys(PLANT_DEFS),
-        algas: Object.keys(ALGAE_DEFS)
+        algas: Object.keys(ALGAE_DEFS),
+        maderas: Object.keys(WOOD_DEFS)
       },
       config: {
         realSecondsPerGameHour: REAL_SECONDS_PER_GAME_HOUR,
@@ -480,7 +542,7 @@ export class GameEngine extends EventEmitter {
           continue;
         }
         for (let i = 0; i < cantidad; i += 1) {
-          this.state.peces.push(createFish(action.especie));
+          this.state.peces.push(createFish(action.especie, chooseSex(action.especie, i)));
         }
         summary.push(`${cantidad} pez/peces ${action.especie}`);
       }
@@ -499,7 +561,7 @@ export class GameEngine extends EventEmitter {
           continue;
         }
         for (let i = 0; i < cantidad; i += 1) {
-          this.state.invertebrados.push(createInvertebrate(action.especie));
+          this.state.invertebrados.push(createInvertebrate(action.especie, chooseSex(action.especie, i)));
         }
         summary.push(`${cantidad} invertebrado(s) ${action.especie}`);
       }
@@ -509,6 +571,13 @@ export class GameEngine extends EventEmitter {
           this.state.algas.push(createAlgae(action.especie));
         }
         summary.push(`${cantidad} alga(s) ${action.especie}`);
+      }
+
+      if (action.tipo === 'AGREGAR_MADERA' && WOOD_DEFS[action.especie]) {
+        for (let i = 0; i < cantidad; i += 1) {
+          this.state.maderas.push(createWood(action.especie));
+        }
+        summary.push(`${cantidad} madera(s) ${action.especie}`);
       }
 
       if (action.tipo === 'ALIMENTAR') {
@@ -627,6 +696,8 @@ export class GameEngine extends EventEmitter {
           this.state.nutrientes = clamp(this.state.nutrientes + 0.6, 0, 100);
           this.state.comida = this.state.comida.filter((food) => food.id !== targetFood.id);
         }
+      } else if (this.schoolFish(fish, def, deltaSeconds)) {
+        continue;
       } else if (this.forageFishNaturally(fish, gameHours)) {
         this.wanderFish(fish, def.speed * 0.75, deltaSeconds);
       } else {
@@ -666,6 +737,74 @@ export class GameEngine extends EventEmitter {
     const algae = this.state.algas[Math.floor(Math.random() * this.state.algas.length)];
     algae.tamano = clamp(algae.tamano - amount, 0, algae.tamano);
     this.state.algas = this.state.algas.filter((item) => item.tamano > 4);
+  }
+
+  schoolFish(fish, def, deltaSeconds) {
+    if (!SCHOOLING_SPECIES.includes(fish.tipo)) return false;
+    const school = this.state.peces.filter((candidate) => candidate.vivo && candidate.tipo === fish.tipo);
+    if (school.length < 4) return false;
+
+    const neighbors = school.filter((candidate) => candidate.id !== fish.id && Math.hypot(candidate.x - fish.x, candidate.y - fish.y) <= 190);
+    if (neighbors.length === 0) return false;
+
+    let centerX = 0;
+    let centerY = 0;
+    let alignX = 0;
+    let alignY = 0;
+    let separateX = 0;
+    let separateY = 0;
+
+    for (const neighbor of neighbors) {
+      centerX += neighbor.x;
+      centerY += neighbor.y;
+      alignX += neighbor.vx || 0;
+      alignY += neighbor.vy || 0;
+      const distance = Math.hypot(fish.x - neighbor.x, fish.y - neighbor.y) || 1;
+      if (distance < 42) {
+        separateX += (fish.x - neighbor.x) / distance;
+        separateY += (fish.y - neighbor.y) / distance;
+      }
+    }
+
+    centerX /= neighbors.length;
+    centerY /= neighbors.length;
+    alignX /= neighbors.length;
+    alignY /= neighbors.length;
+
+    const predator = this.findNearestPredator(fish);
+    let fleeX = 0;
+    let fleeY = 0;
+    if (predator) {
+      const distance = Math.hypot(fish.x - predator.x, fish.y - predator.y) || 1;
+      fleeX = (fish.x - predator.x) / distance;
+      fleeY = (fish.y - predator.y) / distance;
+    }
+
+    fish.vx = (fish.vx || 0) * 0.58 + (centerX - fish.x) * 0.006 + alignX * 0.26 + separateX * 0.62 + fleeX * 1.35;
+    fish.vy = (fish.vy || 0) * 0.58 + (centerY - fish.y) * 0.006 + alignY * 0.26 + separateY * 0.62 + fleeY * 1.35;
+    const magnitude = Math.hypot(fish.vx, fish.vy) || 1;
+    fish.vx /= magnitude;
+    fish.vy /= magnitude;
+    fish.direccion = fish.vx >= 0 ? 1 : -1;
+    fish.x += fish.vx * def.speed * 0.55 * deltaSeconds;
+    fish.y += fish.vy * def.speed * 0.55 * deltaSeconds;
+    this.keepFishInside(fish);
+    return true;
+  }
+
+  findNearestPredator(fish) {
+    if (!['neon', 'tetra', 'rasbora'].includes(fish.tipo)) return null;
+    let nearest = null;
+    let nearestDistance = Infinity;
+    for (const predator of this.state.peces) {
+      if (!predator.vivo || predator.tipo !== 'angel') continue;
+      const distance = Math.hypot(fish.x - predator.x, fish.y - predator.y);
+      if (distance < nearestDistance) {
+        nearest = predator;
+        nearestDistance = distance;
+      }
+    }
+    return nearestDistance <= 230 ? nearest : null;
   }
 
   sinkDeadFish(fish, deltaSeconds) {
@@ -775,6 +914,11 @@ export class GameEngine extends EventEmitter {
 
   tryReproduce(key, candidates, createBaby) {
     if (candidates.length < 2) return;
+    if (SEXED_REPRODUCTION.includes(key)) {
+      const hasMale = candidates.some((animal) => animal.sexo === 'macho');
+      const hasFemale = candidates.some((animal) => animal.sexo === 'hembra');
+      if (!hasMale || !hasFemale) return;
+    }
     if (candidates.some((animal) => animal.hambre > 35 || animal.edadEnHoras < 24)) return;
     const lastBirth = this.state.reproduccion[key] || 0;
     if (this.state.horasJuego - lastBirth < 48) return;
@@ -994,10 +1138,9 @@ export class GameEngine extends EventEmitter {
     const aliveFishTypes = this.state.peces.filter((fish) => fish.vivo).map((fish) => fish.tipo);
     const aliveShrimpTypes = this.state.invertebrados.filter((animal) => animal.vivo && animal.grupo === 'gamba').map((animal) => animal.especie);
     const smallShrimpPresent = aliveShrimpTypes.some((type) => ['cherry', 'fantasma'].includes(type));
-    const schoolingSpecies = ['rasbora', 'tetra'];
     const existingSchoolCount = this.state.peces.filter((fish) => fish.vivo && fish.tipo === species).length;
 
-    if (schoolingSpecies.includes(species) && existingSchoolCount + amount < 6) {
+    if (SCHOOLING_SPECIES.includes(species) && existingSchoolCount + amount < 6) {
       return { ok: false, message: `No se agrego: ${species} necesita un cardumen de al menos 6 ejemplares.` };
     }
 
@@ -1065,19 +1208,19 @@ export class GameEngine extends EventEmitter {
   }
 
   buildHelpMessage() {
-    return 'Ayuda: lista o inventario para ver habitantes por categoria. Peces: neon, guppy, betta, molly, angel/escalar, cebra, corydora, platy, xipho, otocinclus, rasbora, tetra, ramirezi, gourami y ancistrus. Invertebrados: caracoles neritina/manzana/planorbis y gambas cherry/amano/fantasma. Flora: plantas anubia/ambulia y algas verde/filamentosa. Ecosistema: alimenta, limpia muertos, calidad del agua, pausa, tiempo rapido/muy rapido/lento/normal.';
+    return 'Ayuda: lista o inventario para ver habitantes por categoria. Peces: neon, guppy, betta, molly, angel/escalar, cebra, corydora, platy, xipho, otocinclus, rasbora, tetra, ramirezi, gourami y ancistrus. Invertebrados: caracoles neritina/manzana/planorbis y gambas cherry/amano/fantasma. Flora: plantas anubia/ambulia, algas verde/filamentosa y maderas mopani/manzanita/spider/cholla/manglar. Ecosistema: alimenta, limpia muertos, calidad del agua, pausa, tiempo rapido/muy rapido/lento/normal.';
   }
 
   buildMasterMenuMessage() {
     return [
       'Menu maestro:',
       'menu/help: muestra este arbol.',
-      'especies: lista peces, caracoles, gambas, plantas y algas disponibles.',
+      'especies: lista peces, caracoles, gambas, plantas, algas y maderas disponibles.',
       'inventario/lista: muestra lo que vive en tu acuario por categoria.',
       'estado/agua: muestra calidad del agua.',
       'ideas: ejemplos de comandos.',
       'Comandos frecuentes: menu, especies, inventario, estado, ideas, alimentar, agrega un...',
-      'Acciones: alimentar, limpiar muertos, cambiar tiempo, comprar animales, agregar plantas o algas.'
+      'Acciones: alimentar, limpiar muertos, cambiar tiempo, comprar animales, agregar plantas, algas o maderas.'
     ].join(' ');
   }
 
@@ -1089,7 +1232,8 @@ export class GameEngine extends EventEmitter {
       'Gambas: cherry, amano, fantasma.',
       'Plantas: anubia, ambulia.',
       'Algas: verde, filamentosa.',
-      'Alias: beta=betta, escalar/pez angel=angel, danio=cebra, oto=otocinclus, arlequin=rasbora, cardinal=tetra, pleco=ancistrus.'
+      'Maderas: mopani, manzanita, spider, cholla, manglar.',
+      'Alias: beta=betta, escalar/pez angel=angel, danio=cebra, oto=otocinclus, arlequin=rasbora, cardinal=tetra, pleco=ancistrus, raiz=manzanita, rama=manzanita.'
     ].join(' ');
   }
 
@@ -1103,7 +1247,7 @@ export class GameEngine extends EventEmitter {
       'agrega un betta;',
       'compra dos mollys y un otocinclus;',
       'agrega gambas cherry;',
-      'pon una anubia y alga verde;',
+      'pon una anubia, alga verde y madera mopani;',
       'alimenta el acuario;',
       'limpia los muertos;',
       'pon el tiempo rapido;',
@@ -1118,8 +1262,9 @@ export class GameEngine extends EventEmitter {
     const shrimp = this.countBy(this.state.invertebrados, (item) => item.especie, (item) => item.vivo && item.grupo === 'gamba');
     const plants = this.countBy(this.state.plantas, (item) => item.especie);
     const algae = this.countBy(this.state.algas, (item) => item.especie);
+    const woods = this.countBy(this.state.maderas, (item) => item.especie);
 
-    return `Habitantes: peces vivos [${this.formatCounts(fish)}]; peces muertos [${this.formatCounts(deadFish)}]; caracoles [${this.formatCounts(snails)}]; gambas [${this.formatCounts(shrimp)}]; plantas [${this.formatCounts(plants)}]; algas [${this.formatCounts(algae)}].`;
+    return `Habitantes: peces vivos [${this.formatCounts(fish)}]; peces muertos [${this.formatCounts(deadFish)}]; caracoles [${this.formatCounts(snails)}]; gambas [${this.formatCounts(shrimp)}]; plantas [${this.formatCounts(plants)}]; algas [${this.formatCounts(algae)}]; maderas [${this.formatCounts(woods)}].`;
   }
 
   countBy(items, keySelector, predicate = () => true) {
@@ -1141,6 +1286,7 @@ export class GameEngine extends EventEmitter {
   normalizeState() {
     this.state.invertebrados = Array.isArray(this.state.invertebrados) ? this.state.invertebrados : [];
     this.state.algas = Array.isArray(this.state.algas) ? this.state.algas : [];
+    this.state.maderas = Array.isArray(this.state.maderas) ? this.state.maderas : [];
     this.state.velocidadTiempo = TIME_SPEEDS[this.state.velocidadTiempo] !== undefined ? this.state.velocidadTiempo : 'normal';
     this.state.calidadAgua = {
       amonio: 0,
@@ -1159,8 +1305,11 @@ export class GameEngine extends EventEmitter {
     this.lastAlertSignature = null;
     this.state.peces = this.state.peces.filter((fish) => FISH_DEFS[fish.tipo]);
     this.state.invertebrados = this.state.invertebrados.filter((animal) => INVERTEBRATE_DEFS[animal.especie]);
+    this.state.peces.forEach((fish, index) => { fish.sexo = fish.sexo || chooseSex(fish.tipo, index); });
+    this.state.invertebrados.forEach((animal, index) => { animal.sexo = animal.sexo || chooseSex(animal.especie, index); });
     this.state.plantas = this.state.plantas.filter((plant) => PLANT_DEFS[plant.especie]);
     this.state.algas = this.state.algas.filter((algae) => ALGAE_DEFS[algae.especie]);
+    this.state.maderas = this.state.maderas.filter((wood) => WOOD_DEFS[wood.especie]);
     this.state.comida = this.state.comida.filter((food) => Number.isFinite(food.x) && Number.isFinite(food.y));
   }
 

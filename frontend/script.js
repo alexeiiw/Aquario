@@ -8,6 +8,7 @@ const fishCountEl = document.querySelector('#fishCount');
 const invertebrateCountEl = document.querySelector('#invertebrateCount');
 const plantCountEl = document.querySelector('#plantCount');
 const algaeCountEl = document.querySelector('#algaeCount');
+const woodCountEl = document.querySelector('#woodCount');
 const nutrientsEl = document.querySelector('#nutrients');
 const gameHoursEl = document.querySelector('#gameHours');
 const timeSpeedEl = document.querySelector('#timeSpeed');
@@ -22,14 +23,25 @@ const aerationTextEl = document.querySelector('#aerationText');
 const waterAlertsEl = document.querySelector('#waterAlerts');
 const ecosystemPanelEl = document.querySelector('.ecosystem-panel');
 const ecosystemToggleEl = document.querySelector('#ecosystemToggle');
+const animalInspectorEl = document.querySelector('#animalInspector');
+const inspectorCloseEl = document.querySelector('#inspectorClose');
+const inspectorNameEl = document.querySelector('#inspectorName');
+const inspectorSpeciesEl = document.querySelector('#inspectorSpecies');
+const inspectorStatusEl = document.querySelector('#inspectorStatus');
+const inspectorAgeEl = document.querySelector('#inspectorAge');
+const inspectorHungerEl = document.querySelector('#inspectorHunger');
+const inspectorSizeEl = document.querySelector('#inspectorSize');
+const inspectorWarningEl = document.querySelector('#inspectorWarning');
 
 let state = null;
+let selectedAnimalKey = null;
 let bubbles = Array.from({ length: 34 }, () => makeBubble());
 
 socket.on('state:update', (newState) => {
   state = newState;
   renderStats();
   renderMessages();
+  renderInspector();
 });
 
 socket.on('connect_error', () => {
@@ -65,6 +77,20 @@ ecosystemToggleEl.addEventListener('click', () => {
   localStorage.setItem('ecosystemPanelCollapsed', String(isCollapsed));
 });
 
+canvas.addEventListener('click', (event) => {
+  if (!state) return;
+  const point = canvasEventToWorld(event);
+  const animal = findAnimalAt(point.x, point.y);
+  if (!animal) return;
+  selectedAnimalKey = `${animal.kind}:${animal.id}`;
+  renderInspector();
+});
+
+inspectorCloseEl.addEventListener('click', () => {
+  selectedAnimalKey = null;
+  renderInspector();
+});
+
 if (localStorage.getItem('ecosystemPanelCollapsed') === 'true') {
   ecosystemPanelEl.classList.add('collapsed');
   ecosystemToggleEl.textContent = 'Mostrar panel';
@@ -83,6 +109,7 @@ function renderStats() {
   invertebrateCountEl.textContent = `${aliveInvertebrates}/${state.invertebrados.length}`;
   plantCountEl.textContent = state.plantas.length;
   algaeCountEl.textContent = state.algas.length;
+  woodCountEl.textContent = state.maderas?.length || 0;
   nutrientsEl.textContent = Math.round(state.nutrientes);
   gameHoursEl.textContent = Math.floor(state.horasJuego);
   timeSpeedEl.textContent = state.velocidadTiempo;
@@ -116,6 +143,34 @@ function renderMessages() {
   if (shouldStickToBottom) messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
+function renderInspector() {
+  const animal = getSelectedAnimal();
+  if (!animal) {
+    animalInspectorEl.classList.add('hidden');
+    return;
+  }
+
+  animalInspectorEl.classList.remove('hidden');
+  inspectorNameEl.textContent = animal.nombre || animal.tipo || animal.especie;
+  inspectorSpeciesEl.textContent = animal.latin ? `${animal.latin} · ${animal.kind === 'pez' ? 'Pez' : animal.grupo} · ${animal.sexo || 'sexo no registrado'}` : animal.kind;
+  inspectorStatusEl.textContent = getAnimalStatus(animal);
+  inspectorAgeEl.textContent = formatAge(animal.edadEnHoras);
+  inspectorHungerEl.textContent = `${Math.round(animal.hambre || 0)}%`;
+  inspectorSizeEl.textContent = `${Math.round((animal.escala || 1) * 100)}%`;
+
+  const warning = getAnimalWarning(animal);
+  inspectorWarningEl.textContent = warning;
+  inspectorWarningEl.classList.toggle('hidden', !warning);
+}
+
+function getSelectedAnimal() {
+  if (!state || !selectedAnimalKey) return null;
+  const [kind, id] = selectedAnimalKey.split(':');
+  const list = kind === 'pez' ? state.peces : state.invertebrados;
+  const animal = list.find((item) => item.id === id);
+  return animal ? { ...animal, kind } : null;
+}
+
 function addTransientSystemMessage(text) {
   const node = document.createElement('article');
   node.className = 'message sistema';
@@ -143,12 +198,65 @@ function resizeCanvasToDisplaySize() {
 function drawAquarium() {
   drawWater();
   drawBubbles();
+  drawWoods();
   drawPlants();
   drawAlgae();
   drawInvertebrates();
   drawFood();
   drawFish();
+  drawSelectedAnimal();
   drawOverlay();
+}
+
+function drawSelectedAnimal() {
+  const animal = getSelectedAnimal();
+  if (!animal) return;
+  const radius = getAnimalHitRadius(animal) + 8;
+  ctx.save();
+  ctx.strokeStyle = '#fef08a';
+  ctx.lineWidth = 3;
+  ctx.setLineDash([8, 6]);
+  ctx.beginPath();
+  ctx.arc(animal.x, animal.y, radius, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawWoods() {
+  if (!state?.maderas) return;
+  for (const wood of state.maderas) {
+    ctx.save();
+    ctx.translate(wood.x, wood.y);
+    ctx.rotate(wood.rotacion || 0);
+    ctx.scale(wood.escala || 1, wood.escala || 1);
+    ctx.lineCap = 'round';
+
+    ctx.strokeStyle = wood.accent || '#3f1f0f';
+    ctx.lineWidth = 18;
+    ctx.beginPath();
+    ctx.moveTo(-52, 8);
+    ctx.quadraticCurveTo(-20, -20, 24, -6);
+    ctx.quadraticCurveTo(48, 2, 68, -18);
+    ctx.stroke();
+
+    ctx.strokeStyle = wood.color || '#7c3f1d';
+    ctx.lineWidth = 12;
+    ctx.beginPath();
+    ctx.moveTo(-50, 6);
+    ctx.quadraticCurveTo(-18, -15, 24, -4);
+    ctx.quadraticCurveTo(46, 0, 64, -16);
+    ctx.stroke();
+
+    ctx.strokeStyle = wood.accent || '#3f1f0f';
+    ctx.lineWidth = 6;
+    for (let i = -1; i <= 1; i += 1) {
+      ctx.beginPath();
+      ctx.moveTo(-4 + i * 18, -5);
+      ctx.lineTo(-22 + i * 20, -32 - i * 8);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
 }
 
 function drawAlgae() {
@@ -338,6 +446,7 @@ function drawFood() {
 
 function drawFish() {
   if (!state) return;
+  drawSchoolLinks();
   for (const fish of state.peces) {
     ctx.save();
     ctx.translate(fish.x, fish.y);
@@ -380,13 +489,34 @@ function drawFish() {
   }
 }
 
+function drawSchoolLinks() {
+  const groups = ['neon', 'cebra', 'rasbora', 'tetra'];
+  ctx.save();
+  ctx.strokeStyle = 'rgba(186, 230, 253, 0.13)';
+  ctx.lineWidth = 1;
+  for (const type of groups) {
+    const school = state.peces.filter((fish) => fish.vivo && fish.tipo === type);
+    if (school.length < 4) continue;
+    for (const fish of school) {
+      const neighbor = school.find((candidate) => candidate.id !== fish.id && Math.hypot(candidate.x - fish.x, candidate.y - fish.y) < 95);
+      if (!neighbor) continue;
+      ctx.beginPath();
+      ctx.moveTo(fish.x, fish.y);
+      ctx.lineTo(neighbor.x, neighbor.y);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
 function drawGuppyFish(fish, size) {
   drawGenericFish(fish, size * 0.82);
+  const wave = Math.sin(Date.now() / 180 + fish.x) * size * 0.12;
   ctx.fillStyle = fish.accent;
   ctx.beginPath();
   ctx.moveTo(-size * 0.72, 0);
-  ctx.lineTo(-size * 1.75, -size * 0.85);
-  ctx.lineTo(-size * 1.65, size * 0.7);
+  ctx.lineTo(-size * 1.75, -size * 0.85 + wave);
+  ctx.lineTo(-size * 1.65, size * 0.7 + wave);
   ctx.closePath();
   ctx.fill();
 }
@@ -487,6 +617,7 @@ function drawAncistrusFish(fish, size) {
 }
 
 function drawGenericFish(fish, size) {
+  const wave = Math.sin(Date.now() / 220 + fish.x) * size * 0.08;
   ctx.fillStyle = fish.color;
   ctx.beginPath();
   ctx.ellipse(0, 0, size, size * 0.48, 0, 0, Math.PI * 2);
@@ -495,8 +626,8 @@ function drawGenericFish(fish, size) {
   ctx.fillStyle = fish.accent;
   ctx.beginPath();
   ctx.moveTo(-size * 0.82, 0);
-  ctx.lineTo(-size * 1.42, -size * 0.42);
-  ctx.lineTo(-size * 1.42, size * 0.42);
+  ctx.lineTo(-size * 1.42, -size * 0.42 + wave);
+  ctx.lineTo(-size * 1.42, size * 0.42 + wave);
   ctx.closePath();
   ctx.fill();
 
@@ -630,7 +761,7 @@ function drawHungerBar(fish, size) {
 }
 
 function drawOverlay() {
-  if (!state || state.peces.length || state.invertebrados.length || state.plantas.length) return;
+  if (!state || state.peces.length || state.invertebrados.length || state.plantas.length || state.algas.length || state.maderas?.length) return;
   ctx.fillStyle = 'rgba(2, 6, 23, 0.38)';
   ctx.fillRect(0, 0, 960, 620);
   ctx.fillStyle = '#e0f2fe';
@@ -650,6 +781,70 @@ function makeBubble(startY = Math.random() * 620) {
     speed: 0.25 + Math.random() * 1.1,
     phase: Math.random() * 10
   };
+}
+
+function canvasEventToWorld(event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: ((event.clientX - rect.left) / rect.width) * 960,
+    y: ((event.clientY - rect.top) / rect.height) * 620
+  };
+}
+
+function findAnimalAt(x, y) {
+  const animals = [
+    ...state.peces.map((animal) => ({ ...animal, kind: 'pez' })),
+    ...state.invertebrados.map((animal) => ({ ...animal, kind: 'invertebrado' }))
+  ];
+
+  for (let i = animals.length - 1; i >= 0; i -= 1) {
+    const animal = animals[i];
+    const radius = getAnimalHitRadius(animal);
+    if (Math.hypot(animal.x - x, animal.y - y) <= radius) return animal;
+  }
+
+  return null;
+}
+
+function getAnimalHitRadius(animal) {
+  const base = animal.kind === 'pez' ? 34 : 24;
+  return base * (animal.escala || 1) + 12;
+}
+
+function getAnimalStatus(animal) {
+  if (!animal.vivo) return 'muerto';
+  if ((animal.horasEnHambruna || 0) > 0) return `en hambruna (${Math.round(animal.horasEnHambruna)} h)`;
+  if ((animal.hambre || 0) >= 75) return 'hambriento';
+  if (canGrazeNaturally(animal)) return 'vivo, puede alimentarse del ecosistema';
+  return 'vivo';
+}
+
+function getAnimalWarning(animal) {
+  if (!animal.vivo) return 'Retiralo con "limpia los muertos" para proteger la calidad del agua.';
+  const fishTypes = state.peces.filter((fish) => fish.vivo).map((fish) => fish.tipo);
+  const hasBetta = fishTypes.includes('betta');
+  const hasAngel = fishTypes.includes('angel');
+  const smallPrey = ['neon', 'tetra', 'rasbora', 'cherry', 'fantasma'];
+
+  if (animal.tipo === 'betta' && fishTypes.includes('guppy')) return 'Riesgo: betta y guppy pueden tener conflictos por aletas llamativas.';
+  if (animal.tipo === 'guppy' && hasBetta) return 'Riesgo: guppy con betta puede generar agresion.';
+  if (animal.tipo === 'angel' && state.peces.some((fish) => fish.vivo && ['neon', 'tetra', 'rasbora'].includes(fish.tipo))) return 'Riesgo: el pez angel adulto puede depredar peces pequenos de cardumen.';
+  if (animal.kind === 'pez' && smallPrey.includes(animal.tipo) && hasAngel) return 'Riesgo: puede ser presa del pez angel adulto.';
+  if (animal.grupo === 'gamba' && ['cherry', 'fantasma'].includes(animal.especie) && (hasBetta || hasAngel)) return 'Riesgo: esta gamba puede ser cazada por betta o pez angel.';
+  if (animal.tipo === 'gourami' && fishTypes.some((type) => ['betta', 'ramirezi'].includes(type))) return 'Riesgo territorial: gourami, betta y ramirezi pueden competir.';
+  if (animal.tipo === 'ramirezi' && fishTypes.some((type) => ['betta', 'gourami', 'angel'].includes(type))) return 'Riesgo territorial: ramirezi necesita un entorno tranquilo.';
+  return '';
+}
+
+function canGrazeNaturally(animal) {
+  if (['otocinclus', 'ancistrus', 'molly', 'platy', 'xipho', 'corydora', 'guppy'].includes(animal.tipo)) return true;
+  return ['caracol', 'gamba'].includes(animal.grupo);
+}
+
+function formatAge(hours) {
+  const value = Number(hours || 0);
+  if (value < 24) return `${Math.floor(value)} h`;
+  return `${Math.floor(value / 24)} d ${Math.floor(value % 24)} h`;
 }
 
 function escapeHtml(value) {

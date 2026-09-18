@@ -84,7 +84,7 @@ h2 {
 
 .status-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(86px, 1fr));
+  grid-template-columns: repeat(7, minmax(86px, 1fr));
   gap: 8px;
 }
 
@@ -109,8 +109,82 @@ h2 {
 }
 
 .canvas-wrap {
+  position: relative;
   min-width: 0;
   height: 100%;
+}
+
+.animal-inspector {
+  position: absolute;
+  left: 20px;
+  bottom: 20px;
+  z-index: 3;
+  width: min(330px, calc(100% - 40px));
+  padding: 14px;
+  border: 1px solid rgba(253, 224, 71, 0.36);
+  border-radius: 18px;
+  color: var(--text);
+  background: rgba(2, 13, 27, 0.82);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(18px);
+}
+
+.animal-inspector.hidden,
+.inspector-warning.hidden {
+  display: none;
+}
+
+.animal-inspector h3 {
+  margin: 0 0 5px;
+  line-height: 1.1;
+}
+
+.inspector-species {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.animal-inspector dl {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+}
+
+.animal-inspector dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(148, 203, 255, 0.12);
+}
+
+.animal-inspector dt {
+  color: var(--muted);
+}
+
+.animal-inspector dd {
+  margin: 0;
+  text-align: right;
+  font-weight: 800;
+}
+
+.inspector-warning {
+  margin: 10px 0 0;
+  padding: 8px 9px;
+  border-radius: 10px;
+  color: #fde68a;
+  background: rgba(202, 138, 4, 0.18);
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
+
+.inspector-close {
+  float: right;
+  padding: 6px 9px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.72rem;
 }
 
 .ecosystem-panel {
@@ -382,5 +456,11 @@ button:disabled {
 
   canvas {
     height: 56vh;
+  }
+
+  .animal-inspector {
+    position: static;
+    width: auto;
+    margin-top: 8px;
   }
 }

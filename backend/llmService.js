@@ -2,6 +2,7 @@ const validFish = ['neon', 'guppy', 'betta', 'molly', 'angel', 'cebra', 'corydor
 const validInvertebrates = ['neritina', 'manzana', 'planorbis', 'cherry', 'amano', 'fantasma'];
 const validPlants = ['anubia', 'ambulia'];
 const validAlgae = ['verde', 'filamentosa'];
+const validWoods = ['mopani', 'manzanita', 'spider', 'cholla', 'manglar'];
 
 export function interpretUserMessage(message, context = {}) {
   return parseLocalMessage(message, context);
@@ -29,6 +30,7 @@ function parseLocalMessage(message, context) {
   addSpeciesActions(actions, text, validInvertebrates, 'COMPRAR_INVERTEBRADO');
   addSpeciesActions(actions, text, validPlants, 'AGREGAR_PLANTA');
   addSpeciesActions(actions, text, validAlgae, 'AGREGAR_ALGA');
+  addSpeciesActions(actions, text, validWoods, 'AGREGAR_MADERA');
 
   if (actions.length > 0) return { acciones: actions, respuesta_chat: buildResponse(actions), contexto: null };
   if (/\b(agrega|anade|pon|compra|quiero|dame)\b/.test(text)) {
@@ -41,7 +43,7 @@ function parseLocalMessage(message, context) {
   }
   return {
     acciones: [],
-    respuesta_chat: 'No identifique una accion dentro del acuario. Puedes pedir peces, invertebrados, plantas, algas, alimento, limpieza, diagnostico, cambio de agua, estado del agua o velocidad. Escribe “menu” para ver ejemplos.',
+    respuesta_chat: 'No identifique una accion dentro del acuario. Puedes pedir peces, invertebrados, plantas, algas, maderas, alimento, limpieza, diagnostico, cambio de agua, estado del agua o velocidad. Escribe “menu” para ver ejemplos.',
     contexto: null
   };
 }
@@ -55,8 +57,8 @@ function resolvePending(text, pending) {
       : clarification('Indica una velocidad: pausado, lento, normal, rapido o muy rapido.', pending);
   }
 
-  const catalog = pending.tipo === 'pez' ? validFish : pending.tipo === 'invertebrado' ? validInvertebrates : pending.tipo === 'planta' ? validPlants : validAlgae;
-  const type = pending.tipo === 'pez' ? 'COMPRAR_PEZ' : pending.tipo === 'invertebrado' ? 'COMPRAR_INVERTEBRADO' : pending.tipo === 'planta' ? 'AGREGAR_PLANTA' : 'AGREGAR_ALGA';
+  const catalog = pending.tipo === 'pez' ? validFish : pending.tipo === 'invertebrado' ? validInvertebrates : pending.tipo === 'planta' ? validPlants : pending.tipo === 'madera' ? validWoods : validAlgae;
+  const type = pending.tipo === 'pez' ? 'COMPRAR_PEZ' : pending.tipo === 'invertebrado' ? 'COMPRAR_INVERTEBRADO' : pending.tipo === 'planta' ? 'AGREGAR_PLANTA' : pending.tipo === 'madera' ? 'AGREGAR_MADERA' : 'AGREGAR_ALGA';
   const selected = catalog.find((item) => speciesAliases(item).some((alias) => new RegExp(`\\b${alias}\\b`).test(text)));
   if (!selected) return clarification(`Indica una opcion valida: ${catalog.map((item) => item).join(', ')}.`, pending);
   return { acciones: [{ tipo, especie: selected, cantidad: pending.cantidad || findQuantity(text) }], respuesta_chat: 'Listo, agregare eso al acuario.', contexto: null };
@@ -67,6 +69,7 @@ function findMissingCategory(text) {
   if (/\b(invertebrado|caracol|gamba|camar[oó]n|neritina|manzana|planorbis|cherry|amano|fantasma)\b/.test(text)) return 'invertebrado';
   if (/\b(planta|plantas|vegetacion)\b/.test(text)) return 'planta';
   if (/\b(alga|algas)\b/.test(text)) return 'alga';
+  if (/\b(madera|maderas|rama|ramas|raiz|raices|tronco|troncos|mopani|manzanita|spider|cholla|manglar)\b/.test(text)) return 'madera';
   return null;
 }
 
@@ -76,7 +79,8 @@ function clarificationForCategory(category, text) {
     pez: '¿Qué pez deseas agregar? Puedes elegir neon, guppy, betta, molly, angel, cebra, corydora, platy, xipho, otocinclus, rasbora, tetra, ramirezi, gourami o ancistrus.',
     invertebrado: '¿Qué deseas agregar: caracol neritina, manzana, planorbis o gamba cherry, amano o fantasma?',
     planta: '¿Qué planta deseas agregar: anubia o ambulia?',
-    alga: '¿Qué tipo de alga deseas agregar: verde o filamentosa?'
+    alga: '¿Qué tipo de alga deseas agregar: verde o filamentosa?',
+    madera: '¿Qué madera deseas agregar: mopani, manzanita, spider, cholla o manglar?'
   };
   return clarification(questions[category], { tipo: category, cantidad });
 }
@@ -93,7 +97,7 @@ function addSpeciesActions(actions, text, species, type, normalize = (value) => 
 
 function speciesAliases(species) {
   const aliases = {
-    neon: ['neon', 'neones'], guppy: ['guppy', 'gupi'], betta: ['betta', 'beta'],
+    neon: ['neon', 'neones'], guppy: ['guppy', 'guppies', 'gupies', 'gypies', 'gupi'], betta: ['betta', 'beta'],
     angel: ['angel', 'angeles', 'escalar'], cebra: ['cebra', 'cebras', 'danio', 'danios'],
     corydora: ['corydora', 'corydoras', 'cory'], molly: ['molly', 'mollies', 'mollys'],
     platy: ['platy', 'platys'], xipho: ['xipho', 'xiphos', 'espada'],
@@ -103,7 +107,9 @@ function speciesAliases(species) {
     fantasma: ['fantasma', 'fantasmas', 'ghost'], neritina: ['neritina', 'neritinas'],
     manzana: ['manzana', 'manzanas'], planorbis: ['planorbis'], amano: ['amano', 'amanos'],
     anubia: ['anubia', 'anubias'], ambulia: ['ambulia', 'ambulias'],
-    filamentosa: ['filamentosa', 'filamentosas', 'filament'], verde: ['verde', 'verdes']
+    filamentosa: ['filamentosa', 'filamentosas', 'filament'], verde: ['verde', 'verdes'],
+    mopani: ['mopani'], manzanita: ['manzanita', 'rama', 'ramas', 'raiz', 'raices'],
+    spider: ['spider', 'spider wood'], cholla: ['cholla'], manglar: ['manglar']
   };
   return aliases[species] || [species];
 }

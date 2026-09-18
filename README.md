@@ -1,6 +1,6 @@
 # Acuario Virtual 2D Inteligente
 
-Version `1.4.0`.
+Version `1.5.0`.
 
 Simulador web estilo Tamagotchi de un acuario 2D de agua dulce. El usuario controla el ecosistema desde un chat; un parser local interpreta comandos en espanol y el backend mantiene la simulacion, persistencia, tiempo, calidad del agua, hambre, crecimiento, reproduccion y compatibilidad de especies.
 
@@ -42,7 +42,6 @@ frontend/
   script.js          Canvas, sockets y controles
 scripts/
   start-codespace.sh Arranque de Node sin servicios externos
-SUGERENCIAS.md       Roadmap de mejoras propuestas
 ```
 
 ## Persistencia
@@ -64,7 +63,9 @@ rm -f backend/data/aquarium-state.json
 ## Interfaz
 
 - La pecera ocupa la mayor parte de la pantalla.
+- Puedes hacer click sobre peces, caracoles o gambas para inspeccionar especie, edad, hambre, estado, tamano y advertencias.
 - El panel flotante muestra tiempo y calidad del agua.
+- Las maderas se pueden agregar desde el chat y aparecen en el inventario.
 - El panel flotante se puede ocultar/mostrar para ver mejor el acuario.
 - El chat tiene scroll y acepta lenguaje natural.
 - Escribe `menu` para abrir el arbol maestro de ayuda.
@@ -151,6 +152,12 @@ Peces de agua dulce:
 - `gourami`: gourami enano, territorial; se mantiene uno por acuario.
 - `ancistrus`: pez de fondo y consumidor de algas.
 
+Peces de cardumen:
+
+- `neon`, `cebra`, `rasbora` y `tetra` forman grupos de al menos seis ejemplares.
+- Mantienen cohesion, alineacion y separacion mientras nadan.
+- Se alejan de peces angel cercanos y se muestran conectados visualmente como grupo.
+
 Caracoles:
 
 - `neritina`: comedor de algas.
@@ -191,6 +198,7 @@ Reglas actuales:
 - `gourami` se limita a un ejemplar y no convive con `betta` o `ramirezi`.
 - `ramirezi` no se combina con `betta`, `gourami`, `angel` ni otro `ramirezi`.
 - `ancistrus` ocupa el espacio de fondo y puede pastar algas.
+- Los peces de cardumen requieren al menos `6` ejemplares para agregarse.
 
 Si una compra se rechaza, el chat explica el motivo.
 
@@ -232,6 +240,8 @@ Especies reproductivas actuales:
 - `cherry`.
 - `planorbis`.
 
+Las compras de peces e invertebrados registran sexo cuando corresponde. Una compra de `5 guppies` alterna automaticamente hembras y machos (`3` de un sexo y `2` del otro), por lo que puede existir una pareja reproductiva. La reproduccion de guppy y gamba cherry requiere al menos un macho y una hembra; planorbis es hermafrodita.
+
 Condiciones generales:
 
 - Al menos dos individuos vivos de la especie.
@@ -240,6 +250,26 @@ Condiciones generales:
 - Hambre baja.
 - Tiempo minimo desde la ultima cria.
 - Capacidad disponible en el acuario.
+
+Cuando nace una cria, el sistema agrega un mensaje al chat y la cria aparece en el acuario con tamano inicial reducido.
+
+## Plantas, Algas Y Maderas
+
+Las maderas son decoracion funcional del acuario y se agregan con el mismo lenguaje del catalogo:
+
+- `mopani`: madera densa y oscura.
+- `manzanita`: rama ramificada.
+- `spider`: rama fina y ornamental.
+- `cholla`: madera tubular.
+- `manglar`: raiz oscura.
+
+Ejemplos:
+
+- `agrega madera mopani`
+- `pon dos ramas manzanita`
+- `agrega spider`
+
+Los comandos `especies`, `menu` e `inventario` incluyen las maderas disponibles y las maderas colocadas.
 
 ## Comandos de chat
 
@@ -263,6 +293,7 @@ Comandos frecuentes recomendados:
 - `alertas`
 - `cambio de agua 30%`
 - `agrega un betta`
+- `agrega madera mopani`
 
 Conversacion guiada:
 
@@ -322,6 +353,12 @@ Plantas y algas:
 - `agrega algas verdes`
 - `pon alga filamentosa`
 
+Maderas:
+
+- `agrega madera mopani`
+- `pon dos ramas manzanita`
+- `agrega spider wood`
+
 Ecosistema:
 
 - `alimenta el acuario`
@@ -334,11 +371,11 @@ Ecosistema:
 
 No es necesario regenerar el Codespace para recuperar espacio por retirar Ollama: el proyecto ya no instala, inicia ni descarga ningun modelo. Puedes mantener el Codespace actual y reconstruir el contenedor si quieres limpiar dependencias antiguas.
 
-El estado de la partida se guarda en `backend/data/aquarium-state.json`, que no se versiona. Si borras el Codespace, tambien puedes perder ese estado. Para conservarlo, exportalo manualmente o implementa la mejora de importacion/exportacion propuesta en `SUGERENCIAS.md`.
+El estado de la partida se guarda en `backend/data/aquarium-state.json`, que no se versiona. Si borras el Codespace, tambien puedes perder ese estado.
 
 ## Notas de desarrollo
 
 - El parser local interpreta el chat; el movimiento, hambre, agua, crecimiento, compatibilidad y reproduccion los maneja el backend.
 - `backend/llmService.js` conserva su nombre por compatibilidad interna, pero ya no usa un LLM: es un interprete determinista con validacion y aclaraciones.
 - No se deben versionar `backend/data/`, logs, `.env` ni `node_modules`.
-- Ver `SUGERENCIAS.md` para el roadmap de mejoras propuestas.
+- La version `1.5.0` incluye cardumen, reproduccion sexuada, maderas, render de maderas, animacion de aletas y mejoras de inspeccion.

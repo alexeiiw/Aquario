@@ -19,6 +19,7 @@
             <span><strong id="invertebrateCount">0</strong> invertebrados</span>
             <span><strong id="plantCount">0</strong> plantas</span>
             <span><strong id="algaeCount">0</strong> algas</span>
+            <span><strong id="woodCount">0</strong> maderas</span>
             <span><strong id="nutrients">0</strong>% nutrientes</span>
             <span><strong id="gameHours">0</strong> h</span>
           </div>
@@ -26,6 +27,19 @@
         <div class="aquarium-body">
           <div class="canvas-wrap">
             <canvas id="aquarium" width="960" height="620" aria-label="Acuario virtual animado"></canvas>
+            <section id="animalInspector" class="animal-inspector hidden" aria-live="polite">
+              <button id="inspectorClose" class="inspector-close" type="button" aria-label="Cerrar inspeccion">Cerrar</button>
+              <p class="eyebrow">Inspeccion</p>
+              <h3 id="inspectorName">Selecciona un animal</h3>
+              <p id="inspectorSpecies" class="inspector-species">Haz click sobre un pez, caracol o gamba.</p>
+              <dl>
+                <div><dt>Estado</dt><dd id="inspectorStatus">-</dd></div>
+                <div><dt>Edad</dt><dd id="inspectorAge">-</dd></div>
+                <div><dt>Hambre</dt><dd id="inspectorHunger">-</dd></div>
+                <div><dt>Tamano</dt><dd id="inspectorSize">-</dd></div>
+              </dl>
+              <p id="inspectorWarning" class="inspector-warning"></p>
+            </section>
           </div>
           <section class="ecosystem-panel" aria-label="Panel de ecosistema">
             <button id="ecosystemToggle" class="ecosystem-toggle" type="button" aria-expanded="true">Ocultar panel</button>
@@ -64,7 +78,7 @@
         <div id="messages" class="messages" aria-live="polite"></div>
 
         <form id="chatForm" class="chat-form">
-          <textarea id="chatInput" rows="3" placeholder="Comandos: menu · especies · inventario · estado · alimentar · agrega un betta"></textarea>
+          <textarea id="chatInput" rows="3" placeholder="Comandos: menu · especies · inventario · estado · alimentar · agrega un betta · madera mopani"></textarea>
           <button type="submit">Enviar</button>
         </form>
       </aside>
