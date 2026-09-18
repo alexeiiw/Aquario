@@ -1,6 +1,6 @@
 # Acuario Virtual 2D Inteligente
 
-Version `1.5.0`.
+Version `1.6.0`.
 
 Simulador web estilo Tamagotchi de un acuario 2D de agua dulce. El usuario controla el ecosistema desde un chat; un parser local interpreta comandos en espanol y el backend mantiene la simulacion, persistencia, tiempo, calidad del agua, hambre, crecimiento, reproduccion y compatibilidad de especies.
 
@@ -66,6 +66,7 @@ rm -f backend/data/aquarium-state.json
 - Puedes hacer click sobre peces, caracoles o gambas para inspeccionar especie, edad, hambre, estado, tamano y advertencias.
 - El panel flotante muestra tiempo y calidad del agua.
 - Las maderas se pueden agregar desde el chat y aparecen en el inventario.
+- El panel muestra fase del dia, luz, pH y capacidad del filtro.
 - El panel flotante se puede ocultar/mostrar para ver mejor el acuario.
 - El chat tiene scroll y acepta lenguaje natural.
 - Escribe `menu` para abrir el arbol maestro de ayuda.
@@ -131,6 +132,18 @@ Cambio de agua:
 - `cambio de agua`: realiza un cambio del `20%` por defecto.
 - `cambio de agua 30%`: permite indicar el porcentaje.
 - El motor limita cada cambio entre `5%` y `80%` para evitar cambios extremos.
+
+## Filtro, Luz Y Salud
+
+- El filtro pierde capacidad y acumula carga mientras procesa desechos.
+- `limpia el filtro` restaura su capacidad y elimina la carga acumulada.
+- `mejora el filtro` recupera parte de la capacidad.
+- El dia y la noche modifican el aporte de oxigeno de las plantas.
+- La luz puede controlarse con `enciende la luz` y `apaga la luz`.
+- Las maderas aportan taninos y reducen gradualmente el pH.
+- Cada pez, caracol y gamba tiene salud y estres individuales.
+- Mala calidad de agua, hambre y sobrepoblacion aumentan el estres.
+- El diagnostico alerta cuando el filtro esta degradado.
 
 ## Especies
 
@@ -252,6 +265,7 @@ Condiciones generales:
 - Capacidad disponible en el acuario.
 
 Cuando nace una cria, el sistema agrega un mensaje al chat y la cria aparece en el acuario con tamano inicial reducido.
+Los huevos se muestran visualmente, incuban durante varias horas de juego y luego eclosionan.
 
 ## Plantas, Algas Y Maderas
 
@@ -266,6 +280,10 @@ Las maderas son decoracion funcional del acuario y se agregan con el mismo lengu
 Ejemplos:
 
 - `agrega madera mopani`
+- `limpia el filtro`
+- `mejora el filtro`
+- `enciende la luz`
+- `apaga la luz`
 - `pon dos ramas manzanita`
 - `agrega spider`
 
@@ -363,6 +381,10 @@ Ecosistema:
 
 - `alimenta el acuario`
 - `limpia los muertos`
+- `limpia el filtro`
+- `mejora el filtro`
+- `enciende la luz`
+- `apaga la luz`
 - `como esta la calidad del agua`
 - `pon el tiempo rapido`
 - `pausa el acuario`
@@ -378,4 +400,4 @@ El estado de la partida se guarda en `backend/data/aquarium-state.json`, que no 
 - El parser local interpreta el chat; el movimiento, hambre, agua, crecimiento, compatibilidad y reproduccion los maneja el backend.
 - `backend/llmService.js` conserva su nombre por compatibilidad interna, pero ya no usa un LLM: es un interprete determinista con validacion y aclaraciones.
 - No se deben versionar `backend/data/`, logs, `.env` ni `node_modules`.
-- La version `1.5.0` incluye cardumen, reproduccion sexuada, maderas, render de maderas, animacion de aletas y mejoras de inspeccion.
+- La version `1.6.0` incluye cardumen, reproduccion visual, filtro degradable, salud y estres individual, ciclo dia/noche, efectos de luz y taninos, refugios y comportamiento natural.

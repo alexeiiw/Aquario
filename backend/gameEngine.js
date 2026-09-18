@@ -8,6 +8,7 @@ const HUNGER_RATE_MULTIPLIER = Number(process.env.HUNGER_RATE_MULTIPLIER ?? 0.35
 const STARVATION_GRACE_HOURS = Number(process.env.STARVATION_GRACE_HOURS ?? 10);
 const SCHOOLING_SPECIES = ['neon', 'cebra', 'rasbora', 'tetra'];
 const SEXED_REPRODUCTION = ['guppy', 'cherry'];
+const DAY_LENGTH_HOURS = 24;
 
 const FISH_DEFS = {
   neon: {
@@ -308,7 +309,7 @@ const TIME_SPEEDS = {
 
 function createDefaultState() {
   return {
-    version: 4,
+    version: 5,
     ancho: 960,
     alto: 620,
     horasJuego: 0,
@@ -325,13 +326,18 @@ function createDefaultState() {
       nitritos: 0,
       nitratos: 8,
       oxigeno: 92,
-      salud: 92
+      salud: 92,
+      ph: 7.2
     },
     equipos: {
       filtroActivo: true,
-      oxigenacionActiva: true
+      oxigenacionActiva: true,
+      filtroNivel: 100,
+      filtroCarga: 0
     },
     reproduccion: {},
+    huevos: [],
+    luzActiva: true,
     mensajes: [
       {
         autor: 'sistema',
@@ -363,6 +369,9 @@ function createFish(tipo, sexo = chooseSex(tipo)) {
     nombre: def.nombre,
     latin: def.latin,
     sexo,
+    salud: 100,
+    estres: 0,
+    esCria: false,
     edadEnHoras: 0,
     escala: 0.45,
     hambre: 8,
@@ -401,6 +410,9 @@ function createInvertebrate(especie, sexo = chooseSex(especie)) {
     nombre: def.nombre,
     latin: def.latin,
     sexo,
+    salud: 100,
+    estres: 0,
+    esCria: false,
     edadEnHoras: 0,
     escala: 0.45,
     hambre: 6,
@@ -504,7 +516,8 @@ export class GameEngine extends EventEmitter {
       },
       config: {
         realSecondsPerGameHour: REAL_SECONDS_PER_GAME_HOUR,
-        tickMs: TICK_MS
+        tickMs: TICK_MS,
+        fase: this.getDayPhase()
       }
     };
   }
@@ -599,6 +612,22 @@ export class GameEngine extends EventEmitter {
         summary.push(`velocidad de tiempo: ${action.velocidad}`);
       }
 
+      if (action.tipo === 'LIMPIAR_FILTRO') {
+        this.state.equipos.filtroNivel = 100;
+        this.state.equipos.filtroCarga = 0;
+        summary.push('filtro limpiado y capacidad restaurada');
+      }
+
+      if (action.tipo === 'MEJORAR_FILTRO') {
+        this.state.equipos.filtroNivel = clamp(this.state.equipos.filtroNivel + 25, 0, 100);
+        summary.push('filtro mejorado temporalmente');
+      }
+
+      if (action.tipo === 'LUZ') {
+        this.state.luzActiva = action.activa;
+        summary.push(`luz ${action.activa ? 'encendida' : 'apagada'}`);
+      }
+
       if (action.tipo === 'CONSULTAR_ESTADO') {
         summary.push(this.buildWaterStatusMessage());
       }
@@ -650,6 +679,7 @@ export class GameEngine extends EventEmitter {
     this.updateInvertebrates(gameHours, TICK_MS / 1000);
     this.updatePlants(gameHours);
     this.updateAlgae(gameHours);
+    this.updateEggs(gameHours);
     this.updateWaterQuality(gameHours);
     this.updateReproduction();
     this.state.ultimaActualizacion = new Date().toISOString();
@@ -697,6 +727,8 @@ export class GameEngine extends EventEmitter {
           this.state.comida = this.state.comida.filter((food) => food.id !== targetFood.id);
         }
       } else if (this.schoolFish(fish, def, deltaSeconds)) {
+        continue;
+      } else if (this.moveTerritorialFish(fish, def, deltaSeconds)) {
         continue;
       } else if (this.forageFishNaturally(fish, gameHours)) {
         this.wanderFish(fish, def.speed * 0.75, deltaSeconds);
@@ -807,6 +839,24 @@ export class GameEngine extends EventEmitter {
     return nearestDistance <= 230 ? nearest : null;
   }
 
+  moveTerritorialFish(fish, def, deltaSeconds) {
+    if (!['betta', 'ramirezi', 'gourami'].includes(fish.tipo) || this.state.maderas.length === 0) return false;
+    const refuge = this.findNearestWood(fish);
+    if (!refuge || Math.hypot(fish.x - refuge.x, fish.y - refuge.y) < 80) {
+      this.wanderFish(fish, def.speed * 0.55, deltaSeconds);
+      return true;
+    }
+    this.moveFishTowards(fish, refuge, def.speed * 0.55, deltaSeconds);
+    return true;
+  }
+
+  findNearestWood(entity) {
+    return this.state.maderas.reduce((nearest, wood) => {
+      if (!nearest) return wood;
+      return Math.hypot(entity.x - wood.x, entity.y - wood.y) < Math.hypot(entity.x - nearest.x, entity.y - nearest.y) ? wood : nearest;
+    }, null);
+  }
+
   sinkDeadFish(fish, deltaSeconds) {
     const bottomY = this.state.alto - 58;
     if (fish.y < bottomY) {
@@ -850,24 +900,32 @@ export class GameEngine extends EventEmitter {
 
     quality.amonio = clamp(quality.amonio + aliveAnimals * 0.018 * gameHours + deadAnimals * 0.12 * gameHours, 0, 100);
 
-    if (this.state.equipos.filtroActivo) {
-      const convertedAmmonia = Math.min(quality.amonio, 1.8 * gameHours);
+    const filterCapacity = clamp((this.state.equipos.filtroNivel ?? 100) / 100, 0, 1);
+    this.state.equipos.filtroCarga = clamp((this.state.equipos.filtroCarga || 0) + aliveAnimals * 0.02 * gameHours, 0, 100);
+    this.state.equipos.filtroNivel = clamp((this.state.equipos.filtroNivel ?? 100) - aliveAnimals * 0.003 * gameHours, 0, 100);
+
+    if (this.state.equipos.filtroActivo && filterCapacity > 0) {
+      const convertedAmmonia = Math.min(quality.amonio, 1.8 * filterCapacity * gameHours);
       quality.amonio = clamp(quality.amonio - convertedAmmonia, 0, 100);
       quality.nitritos = clamp(quality.nitritos + convertedAmmonia * 0.6, 0, 100);
 
-      const convertedNitrites = Math.min(quality.nitritos, 1.3 * gameHours);
+      const convertedNitrites = Math.min(quality.nitritos, 1.3 * filterCapacity * gameHours);
       quality.nitritos = clamp(quality.nitritos - convertedNitrites, 0, 100);
       quality.nitratos = clamp(quality.nitratos + convertedNitrites * 0.85, 0, 100);
     }
 
-    quality.nitratos = clamp(quality.nitratos - plants * 0.025 * gameHours, 0, 100);
+    const isDay = this.getDayPhase() === 'dia';
+    quality.nitratos = clamp(quality.nitratos - plants * 0.025 * gameHours + (!this.state.luzActiva ? 0.06 : 0) * gameHours, 0, 100);
     quality.oxigeno = clamp(
-      quality.oxigeno + (this.state.equipos.oxigenacionActiva ? 2.2 : -1.2) * gameHours + this.state.plantas.length * 0.02 * gameHours - aliveAnimals * 0.035 * gameHours,
+      quality.oxigeno + (this.state.equipos.oxigenacionActiva ? 2.2 : -1.2) * gameHours + (isDay && this.state.luzActiva ? this.state.plantas.length * 0.08 : -this.state.plantas.length * 0.025) * gameHours - aliveAnimals * 0.035 * gameHours,
       0,
       100
     );
 
+    const woodTannins = this.state.maderas.reduce((total, wood) => total + (wood.tannins || 0), 0);
+    quality.ph = clamp((quality.ph || 7.2) - woodTannins * 0.002 * gameHours, 5.5, 8.5);
     quality.salud = clamp(100 - quality.amonio * 1.6 - quality.nitritos * 1.3 - Math.max(0, quality.nitratos - 35) * 0.45 - Math.max(0, 70 - quality.oxigeno) * 1.1, 0, 100);
+    this.updateAnimalHealth(gameHours, quality.salud, aliveAnimals);
 
     if (quality.salud < 25) {
       for (const fish of this.state.peces) {
@@ -890,6 +948,10 @@ export class GameEngine extends EventEmitter {
     water.salud = clamp(100 - water.amonio * 1.6 - water.nitritos * 1.3 - Math.max(0, water.nitratos - 35) * 0.45 - Math.max(0, 70 - water.oxigeno) * 1.1, 0, 100);
   }
 
+  getDayPhase() {
+    return (this.state.horasJuego % DAY_LENGTH_HOURS) < 12 ? 'dia' : 'noche';
+  }
+
   getWaterAlerts() {
     const water = this.state.calidadAgua;
     const alerts = [];
@@ -898,7 +960,12 @@ export class GameEngine extends EventEmitter {
     if (water.nitratos >= 40) alerts.push({ tipo: 'nitratos', severidad: 'media', texto: 'Los nitratos estan altos: conviene cambiar agua y revisar las algas.' });
     if (water.oxigeno < 60) alerts.push({ tipo: 'oxigeno', severidad: 'alta', texto: 'El oxigeno esta bajo: activa la oxigenacion.' });
     if (water.salud < 55) alerts.push({ tipo: 'salud', severidad: 'alta', texto: 'La salud del agua es baja: evita introducir animales nuevos.' });
+    if ((this.state.equipos.filtroNivel ?? 100) < 25) alerts.push({ tipo: 'filtro', severidad: 'alta', texto: 'El filtro esta degradado: usa "limpia el filtro".' });
     return alerts;
+  }
+
+  hasNearbyPredator(animal) {
+    return this.state.peces.some((fish) => fish.vivo && ['betta', 'angel'].includes(fish.tipo) && Math.hypot(fish.x - animal.x, fish.y - animal.y) < 240);
   }
 
   updateReproduction() {
@@ -906,6 +973,18 @@ export class GameEngine extends EventEmitter {
     this.tryReproduce('guppy', this.state.peces.filter((fish) => fish.vivo && fish.tipo === 'guppy'), () => this.state.peces.push(createFish('guppy')));
     this.tryReproduce('cherry', this.state.invertebrados.filter((animal) => animal.vivo && animal.especie === 'cherry'), () => this.state.invertebrados.push(createInvertebrate('cherry')));
     this.tryReproduce('planorbis', this.state.invertebrados.filter((animal) => animal.vivo && animal.especie === 'planorbis'), () => this.state.invertebrados.push(createInvertebrate('planorbis')));
+  }
+
+  updateAnimalHealth(gameHours, waterHealth, aliveAnimals) {
+    const overcrowding = Math.max(0, aliveAnimals - 30) * 0.35;
+    for (const animal of [...this.state.peces, ...this.state.invertebrados]) {
+      if (!animal.vivo) continue;
+      const stressGain = Math.max(0, 70 - waterHealth) * 0.015 + overcrowding * 0.01 + (animal.hambre > 75 ? 0.3 : 0);
+      const recovery = waterHealth >= 80 && animal.hambre < 45 ? 0.2 : 0;
+      animal.estres = clamp((animal.estres || 0) + (stressGain - recovery) * gameHours, 0, 100);
+      animal.salud = clamp((animal.salud ?? 100) - Math.max(0, animal.estres - 55) * 0.008 * gameHours + (animal.estres < 25 ? 0.04 * gameHours : 0), 0, 100);
+      if (animal.salud < 25) animal.hambre = clamp(animal.hambre + 0.35 * gameHours, 0, 100);
+    }
   }
 
   canReproduce() {
@@ -923,9 +1002,31 @@ export class GameEngine extends EventEmitter {
     const lastBirth = this.state.reproduccion[key] || 0;
     if (this.state.horasJuego - lastBirth < 48) return;
     if (Math.random() > 0.025) return;
-    createBaby();
+    const parent = candidates[0];
+    this.state.huevos.push({
+      id: id('huevo'),
+      especie: key,
+      x: parent.x,
+      y: parent.y,
+      edadEnHoras: 0,
+      incubacionHoras: key === 'planorbis' ? 18 : 24,
+      color: key === 'guppy' ? '#fef08a' : key === 'cherry' ? '#fca5a5' : '#fde68a'
+    });
     this.state.reproduccion[key] = this.state.horasJuego;
-    this.addChatMessage('sistema', `Buenas condiciones: nacio una cria de ${key}.`);
+    this.addChatMessage('sistema', `Buenas condiciones: aparecieron huevos de ${key}.`);
+  }
+
+  updateEggs(gameHours) {
+    if (!Array.isArray(this.state.huevos)) this.state.huevos = [];
+    for (const egg of this.state.huevos) egg.edadEnHoras += gameHours;
+    const ready = this.state.huevos.filter((egg) => egg.edadEnHoras >= egg.incubacionHoras);
+    for (const egg of ready) {
+      if (egg.especie === 'guppy') this.state.peces.push({ ...createFish('guppy'), escala: 0.28, esCria: true, x: egg.x, y: egg.y });
+      if (egg.especie === 'cherry') this.state.invertebrados.push({ ...createInvertebrate('cherry'), escala: 0.28, esCria: true, x: egg.x, y: egg.y });
+      if (egg.especie === 'planorbis') this.state.invertebrados.push({ ...createInvertebrate('planorbis'), escala: 0.28, esCria: true, x: egg.x, y: egg.y });
+      this.addChatMessage('sistema', `Eclosionaron crias de ${egg.especie}.`);
+    }
+    this.state.huevos = this.state.huevos.filter((egg) => egg.edadEnHoras < egg.incubacionHoras);
   }
 
   updateInvertebrates(gameHours, deltaSeconds) {
@@ -953,6 +1054,14 @@ export class GameEngine extends EventEmitter {
           this.state.nutrientes = clamp(this.state.nutrientes + 0.2 * gameHours, 0, 100);
         }
         continue;
+      }
+
+      if (animal.grupo === 'gamba' && this.hasNearbyPredator(animal)) {
+        const refuge = this.findNearestWood(animal);
+        if (refuge) {
+          this.moveBottomAnimalTowards(animal, refuge, def.speed * 1.2, deltaSeconds);
+          continue;
+        }
       }
 
       const targetFood = this.findNearestFood(animal);
@@ -1198,7 +1307,7 @@ export class GameEngine extends EventEmitter {
     const water = this.state.calidadAgua;
     const alerts = this.getWaterAlerts();
     const alertText = alerts.length > 0 ? ` Alertas: ${alerts.map((alert) => alert.texto).join(' ')}` : ' No hay alertas activas.';
-    return `Agua: salud ${Math.round(water.salud)}%, amonio ${Math.round(water.amonio)}%, nitritos ${Math.round(water.nitritos)}%, nitratos ${Math.round(water.nitratos)}%, oxigeno ${Math.round(water.oxigeno)}%.${alertText}`;
+    return `Agua: salud ${Math.round(water.salud)}%, pH ${(water.ph || 7.2).toFixed(2)}, amonio ${Math.round(water.amonio)}%, nitritos ${Math.round(water.nitritos)}%, nitratos ${Math.round(water.nitratos)}%, oxigeno ${Math.round(water.oxigeno)}%. Fase: ${this.getDayPhase()}.${alertText}`;
   }
 
   buildDiagnosticMessage() {
@@ -1208,7 +1317,7 @@ export class GameEngine extends EventEmitter {
   }
 
   buildHelpMessage() {
-    return 'Ayuda: lista o inventario para ver habitantes por categoria. Peces: neon, guppy, betta, molly, angel/escalar, cebra, corydora, platy, xipho, otocinclus, rasbora, tetra, ramirezi, gourami y ancistrus. Invertebrados: caracoles neritina/manzana/planorbis y gambas cherry/amano/fantasma. Flora: plantas anubia/ambulia, algas verde/filamentosa y maderas mopani/manzanita/spider/cholla/manglar. Ecosistema: alimenta, limpia muertos, calidad del agua, pausa, tiempo rapido/muy rapido/lento/normal.';
+    return 'Ayuda: lista o inventario para ver habitantes por categoria. Peces: neon, guppy, betta, molly, angel/escalar, cebra, corydora, platy, xipho, otocinclus, rasbora, tetra, ramirezi, gourami y ancistrus. Invertebrados: caracoles neritina/manzana/planorbis y gambas cherry/amano/fantasma. Flora: plantas anubia/ambulia, algas verde/filamentosa y maderas mopani/manzanita/spider/cholla/manglar. Ecosistema: alimenta, limpia muertos, limpia el filtro, enciende/apaga la luz, calidad del agua, pausa, tiempo rapido/muy rapido/lento/normal.';
   }
 
   buildMasterMenuMessage() {
@@ -1220,7 +1329,7 @@ export class GameEngine extends EventEmitter {
       'estado/agua: muestra calidad del agua.',
       'ideas: ejemplos de comandos.',
       'Comandos frecuentes: menu, especies, inventario, estado, ideas, alimentar, agrega un...',
-      'Acciones: alimentar, limpiar muertos, cambiar tiempo, comprar animales, agregar plantas, algas o maderas.'
+      'Acciones: alimentar, limpiar muertos, limpiar/mejorar filtro, controlar luz, cambiar tiempo, comprar animales, agregar plantas, algas o maderas.'
     ].join(' ');
   }
 
@@ -1248,6 +1357,8 @@ export class GameEngine extends EventEmitter {
       'compra dos mollys y un otocinclus;',
       'agrega gambas cherry;',
       'pon una anubia, alga verde y madera mopani;',
+      'limpia el filtro;',
+      'apaga la luz;',
       'alimenta el acuario;',
       'limpia los muertos;',
       'pon el tiempo rapido;',
@@ -1294,14 +1405,19 @@ export class GameEngine extends EventEmitter {
       nitratos: 8,
       oxigeno: 92,
       salud: 92,
+      ph: 7.2,
       ...(this.state.calidadAgua || {})
     };
     this.state.equipos = {
       filtroActivo: true,
       oxigenacionActiva: true,
+      filtroNivel: 100,
+      filtroCarga: 0,
       ...(this.state.equipos || {})
     };
     this.state.reproduccion = this.state.reproduccion || {};
+    this.state.huevos = Array.isArray(this.state.huevos) ? this.state.huevos : [];
+    this.state.luzActiva = this.state.luzActiva !== false;
     this.lastAlertSignature = null;
     this.state.peces = this.state.peces.filter((fish) => FISH_DEFS[fish.tipo]);
     this.state.invertebrados = this.state.invertebrados.filter((animal) => INVERTEBRATE_DEFS[animal.especie]);
@@ -1310,6 +1426,10 @@ export class GameEngine extends EventEmitter {
     this.state.plantas = this.state.plantas.filter((plant) => PLANT_DEFS[plant.especie]);
     this.state.algas = this.state.algas.filter((algae) => ALGAE_DEFS[algae.especie]);
     this.state.maderas = this.state.maderas.filter((wood) => WOOD_DEFS[wood.especie]);
+    this.state.equipos.filtroNivel = clamp(this.state.equipos.filtroNivel ?? 100, 0, 100);
+    this.state.equipos.filtroCarga = clamp(this.state.equipos.filtroCarga ?? 0, 0, 100);
+    this.state.peces.forEach((fish) => { fish.salud = fish.salud ?? 100; fish.estres = fish.estres ?? 0; fish.esCria = fish.esCria ?? false; });
+    this.state.invertebrados.forEach((animal) => { animal.salud = animal.salud ?? 100; animal.estres = animal.estres ?? 0; animal.esCria = animal.esCria ?? false; });
     this.state.comida = this.state.comida.filter((food) => Number.isFinite(food.x) && Number.isFinite(food.y));
   }
 

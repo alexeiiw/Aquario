@@ -22,6 +22,10 @@ function parseLocalMessage(message, context) {
   if (waterChange && !asksAboutWaterChange) actions.push({ tipo: 'CAMBIAR_AGUA', porcentaje: waterChange[1] ? Number(waterChange[1]) : 20, cantidad: 1 });
   if (/\b(diagnostico|diagnostica|alertas|alerta)\b/.test(text) || asksAboutWaterChange) actions.push({ tipo: 'DIAGNOSTICO', cantidad: 1 });
   if (/\b(agua|calidad|amonio|nitrito|nitrato|oxigen)\w*\b/.test(text) && /\b(como|revisa|ver|consulta|estado)\b/.test(text)) actions.push({ tipo: 'CONSULTAR_ESTADO', cantidad: 1 });
+  if (/\b(limpia|limpiar|mantenimiento)\b.*\bfiltro\b/.test(text)) actions.push({ tipo: 'LIMPIAR_FILTRO', cantidad: 1 });
+  if (/\b(mejora|mejorar|potencia)\b.*\bfiltro\b/.test(text)) actions.push({ tipo: 'MEJORAR_FILTRO', cantidad: 1 });
+  if (/\b(enciende|encender|prende|prender)\b.*\b(luz|iluminacion)\b/.test(text)) actions.push({ tipo: 'LUZ', activa: true, cantidad: 1 });
+  if (/\b(apaga|apagar)\b.*\b(luz|iluminacion)\b/.test(text)) actions.push({ tipo: 'LUZ', activa: false, cantidad: 1 });
 
   const speed = findSpeed(text);
   if (speed) actions.push({ tipo: 'CAMBIAR_TIEMPO', velocidad: speed, cantidad: 1 });

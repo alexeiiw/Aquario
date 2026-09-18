@@ -20,6 +20,10 @@ const nitrateTextEl = document.querySelector('#nitrateText');
 const oxygenTextEl = document.querySelector('#oxygenText');
 const filterTextEl = document.querySelector('#filterText');
 const aerationTextEl = document.querySelector('#aerationText');
+const phTextEl = document.querySelector('#phText');
+const phaseTextEl = document.querySelector('#phaseText');
+const filterLevelTextEl = document.querySelector('#filterLevelText');
+const lightTextEl = document.querySelector('#lightText');
 const waterAlertsEl = document.querySelector('#waterAlerts');
 const ecosystemPanelEl = document.querySelector('.ecosystem-panel');
 const ecosystemToggleEl = document.querySelector('#ecosystemToggle');
@@ -30,6 +34,8 @@ const inspectorSpeciesEl = document.querySelector('#inspectorSpecies');
 const inspectorStatusEl = document.querySelector('#inspectorStatus');
 const inspectorAgeEl = document.querySelector('#inspectorAge');
 const inspectorHungerEl = document.querySelector('#inspectorHunger');
+const inspectorHealthEl = document.querySelector('#inspectorHealth');
+const inspectorStressEl = document.querySelector('#inspectorStress');
 const inspectorSizeEl = document.querySelector('#inspectorSize');
 const inspectorWarningEl = document.querySelector('#inspectorWarning');
 
@@ -125,7 +131,11 @@ function renderStats() {
   nitrateTextEl.textContent = `${Math.round(water.nitratos)}%`;
   oxygenTextEl.textContent = `${Math.round(water.oxigeno)}%`;
   filterTextEl.textContent = state.equipos.filtroActivo ? 'activo' : 'apagado';
+  filterLevelTextEl.textContent = `${Math.round(state.equipos.filtroNivel ?? 100)}%`;
   aerationTextEl.textContent = state.equipos.oxigenacionActiva ? 'activa' : 'apagada';
+  phTextEl.textContent = Number(state.calidadAgua.ph ?? 7.2).toFixed(2);
+  phaseTextEl.textContent = state.config?.fase || 'dia';
+  lightTextEl.textContent = state.luzActiva ? 'encendida' : 'apagada';
   waterAlertsEl.innerHTML = state.alertas?.length
     ? state.alertas.map((alert) => `<span class="water-alert ${escapeHtml(alert.severidad)}">${escapeHtml(alert.texto)}</span>`).join('')
     : '<span class="water-ok">Sin alertas activas</span>';
@@ -156,6 +166,8 @@ function renderInspector() {
   inspectorStatusEl.textContent = getAnimalStatus(animal);
   inspectorAgeEl.textContent = formatAge(animal.edadEnHoras);
   inspectorHungerEl.textContent = `${Math.round(animal.hambre || 0)}%`;
+  inspectorHealthEl.textContent = `${Math.round(animal.salud ?? 100)}%`;
+  inspectorStressEl.textContent = `${Math.round(animal.estres ?? 0)}%`;
   inspectorSizeEl.textContent = `${Math.round((animal.escala || 1) * 100)}%`;
 
   const warning = getAnimalWarning(animal);
@@ -201,6 +213,7 @@ function drawAquarium() {
   drawWoods();
   drawPlants();
   drawAlgae();
+  drawEggs();
   drawInvertebrates();
   drawFood();
   drawFish();
@@ -255,6 +268,19 @@ function drawWoods() {
       ctx.lineTo(-22 + i * 20, -32 - i * 8);
       ctx.stroke();
     }
+    ctx.restore();
+  }
+}
+
+function drawEggs() {
+  if (!state?.huevos?.length) return;
+  for (const egg of state.huevos) {
+    ctx.save();
+    ctx.fillStyle = egg.color || '#fde68a';
+    ctx.globalAlpha = 0.8;
+    ctx.beginPath();
+    ctx.arc(egg.x, egg.y, 4 + Math.sin(Date.now() / 280 + egg.x) * 0.7, 0, Math.PI * 2);
+    ctx.fill();
     ctx.restore();
   }
 }
