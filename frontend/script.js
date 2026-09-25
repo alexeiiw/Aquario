@@ -48,6 +48,7 @@ let bubbles = Array.from({ length: 34 }, () => makeBubble());
 let soundContext = null;
 let soundGain = null;
 let filterSoundEnabled = false;
+let bubbleTimer = null;
 
 socket.on('state:update', (newState) => {
   state = newState;
@@ -97,6 +98,7 @@ soundVolumeEl.addEventListener('input', () => {
 
 soundToggleEl.addEventListener('click', () => {
   if (filterSoundEnabled) {
+    stopBubbleSounds();
     soundContext.suspend();
     setFilterSoundEnabled(false);
     return;
@@ -182,7 +184,7 @@ function setFilterSoundEnabled(enabled) {
   filterSoundEnabled = enabled;
   soundToggleEl.textContent = enabled ? 'Silenciar sonido' : 'Activar sonido';
   soundToggleEl.setAttribute('aria-pressed', String(enabled));
-  soundStatusEl.textContent = enabled ? 'Filtro suave activo' : 'Filtro suave apagado';
+  soundStatusEl.textContent = enabled ? 'Filtro y burbujas activos' : 'Filtro y burbujas apagados';
 }
 
 async function startFilterSound() {
@@ -212,8 +214,45 @@ async function startFilterSound() {
     noise.start();
   }
 
-  await soundContext.resume();
-  setFilterSoundEnabled(true);
+  try {
+    await soundContext.resume();
+    setFilterSoundEnabled(true);
+    startBubbleSounds();
+  } catch {
+    soundStatusEl.textContent = 'No se pudo activar el sonido ambiental.';
+  }
+}
+
+function startBubbleSounds() {
+  stopBubbleSounds();
+  playBubbleSound();
+  bubbleTimer = window.setInterval(playBubbleSound, 1400);
+}
+
+function stopBubbleSounds() {
+  if (bubbleTimer) window.clearInterval(bubbleTimer);
+  bubbleTimer = null;
+}
+
+function playBubbleSound() {
+  if (!filterSoundEnabled || !soundContext || !soundGain) return;
+  const count = Math.random() > 0.55 ? 2 : 1;
+  const now = soundContext.currentTime;
+
+  for (let index = 0; index < count; index += 1) {
+    const start = now + index * 0.11;
+    const oscillator = soundContext.createOscillator();
+    const gain = soundContext.createGain();
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(360 + Math.random() * 120, start);
+    oscillator.frequency.exponentialRampToValueAtTime(130 + Math.random() * 45, start + 0.15);
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(0.42, start + 0.018);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.16);
+    oscillator.connect(gain).connect(soundGain);
+    oscillator.start(start);
+    oscillator.stop(start + 0.17);
+  }
 }
 
 function renderInspector() {
