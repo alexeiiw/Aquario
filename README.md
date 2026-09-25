@@ -1,6 +1,6 @@
 # Acuario Virtual 2D Inteligente
 
-Version `1.6.0`.
+Version `1.7.0`.
 
 Simulador web estilo Tamagotchi de un acuario 2D de agua dulce. El usuario controla el ecosistema desde un chat; un parser local interpreta comandos en espanol y el backend mantiene la simulacion, persistencia, tiempo, calidad del agua, hambre, crecimiento, reproduccion y compatibilidad de especies.
 
@@ -67,6 +67,7 @@ rm -f backend/data/aquarium-state.json
 - El panel flotante muestra tiempo y calidad del agua.
 - Las maderas se pueden agregar desde el chat y aparecen en el inventario.
 - El panel muestra fase del dia, luz, pH y capacidad del filtro.
+- En escritorio, los controles de tiempo y ambiente se muestran lado a lado; la calidad del agua y sus alertas ocupan todo el ancho para que no queden ocultas.
 - El panel flotante se puede ocultar/mostrar para ver mejor el acuario.
 - El chat tiene scroll y acepta lenguaje natural.
 - Escribe `menu` para abrir el arbol maestro de ayuda.
@@ -76,6 +77,14 @@ rm -f backend/data/aquarium-state.json
 - Usa `cambio de agua 30%` para reducir amonio, nitritos y nitratos.
 - Escribe `lista`, `inventario`, `habitantes` o `que peces tengo` para ver lo que vive en el acuario por categorias.
 - El cuadro de texto muestra comandos frecuentes: `menu`, `especies`, `inventario`, `estado`, `alimentar`, `agrega un...`.
+
+## Ambiente Sonoro
+
+- El bloque `Ambiente` incluye un sonido local y suave de filtro con burbujas.
+- Pulsa `Activar sonido` para iniciarlo. Los navegadores requieren esta interaccion antes de reproducir audio.
+- Usa el control de volumen para regularlo o `Silenciar sonido` para detenerlo.
+- El sonido se genera en el navegador; no descarga archivos ni requiere servicios externos.
+- El volumen elegido se conserva en el navegador para la siguiente visita.
 
 ## Tiempo
 
@@ -125,13 +134,23 @@ Consulta por chat:
 - `diagnostico`
 - `alertas`
 
-Las alertas tambien aparecen automaticamente en el panel de calidad del agua y en el chat cuando cambian los niveles de riesgo. Una pregunta como `¿el acuario necesita un cambio de agua?` consulta el diagnostico sin ejecutar ninguna accion.
+Las alertas aparecen automaticamente en el panel de calidad del agua y en el chat cuando cambian los niveles de riesgo. Una pregunta como `¿el acuario necesita un cambio de agua?` consulta el diagnostico sin ejecutar ninguna accion.
+
+Umbrales de alerta actuales:
+
+- Amonio desde `25%`: cambia agua y reduce la comida.
+- Nitritos desde `15%`: revisa el filtro y cambia agua.
+- Nitratos desde `40%`: conviene cambiar agua.
+- Oxigeno menor de `60%`: revisa la oxigenacion.
+- Salud general menor de `55%`: no agregues animales nuevos.
+- Capacidad del filtro menor de `25%`: limpia el filtro.
 
 Cambio de agua:
 
 - `cambio de agua`: realiza un cambio del `20%` por defecto.
 - `cambio de agua 30%`: permite indicar el porcentaje.
 - El motor limita cada cambio entre `5%` y `80%` para evitar cambios extremos.
+- El cambio reduce amonio, nitritos y nitratos, y aumenta parcialmente el oxigeno.
 
 ## Filtro, Luz Y Salud
 
@@ -265,7 +284,7 @@ Condiciones generales:
 - Capacidad disponible en el acuario.
 
 Cuando nace una cria, el sistema agrega un mensaje al chat y la cria aparece en el acuario con tamano inicial reducido.
-Los huevos se muestran visualmente, incuban durante varias horas de juego y luego eclosionan.
+Los huevos se muestran visualmente, incuban durante varias horas de juego y luego eclosionan. El chat avisa cuando aparecen huevos y cuando las crias eclosionan.
 
 ## Plantas, Algas Y Maderas
 
@@ -400,4 +419,5 @@ El estado de la partida se guarda en `backend/data/aquarium-state.json`, que no 
 - El parser local interpreta el chat; el movimiento, hambre, agua, crecimiento, compatibilidad y reproduccion los maneja el backend.
 - `backend/llmService.js` conserva su nombre por compatibilidad interna, pero ya no usa un LLM: es un interprete determinista con validacion y aclaraciones.
 - No se deben versionar `backend/data/`, logs, `.env` ni `node_modules`.
-- La version `1.6.0` incluye cardumen, reproduccion visual, filtro degradable, salud y estres individual, ciclo dia/noche, efectos de luz y taninos, refugios y comportamiento natural.
+- La version `1.7.0` incorpora el panel de ecosistema en dos columnas para hacer visibles las alertas, y ambiente sonoro opcional de filtro con burbujas y volumen regulable.
+- Las funciones anteriores incluyen cardumen, reproduccion visual, filtro degradable, salud y estres individual, ciclo dia/noche, efectos de luz y taninos, refugios y comportamiento natural.
