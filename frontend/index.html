@@ -56,6 +56,12 @@
               </div>
               <span>Velocidad: <strong id="timeSpeed">normal</strong></span>
             </div>
+            <div class="sound-controls">
+              <strong>Ambiente</strong>
+              <span id="soundStatus">Filtro suave apagado</span>
+              <button id="soundToggle" type="button" aria-pressed="false">Activar sonido</button>
+              <label for="soundVolume">Volumen <input id="soundVolume" type="range" min="0" max="100" value="18"></label>
+            </div>
             <div class="water-panel">
               <strong>Calidad del agua</strong>
               <span>Salud <meter id="waterHealth" min="0" max="100" value="92"></meter> <b id="waterHealthText">92%</b></span>

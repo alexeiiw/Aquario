@@ -218,11 +218,13 @@ h2 {
 }
 
 .ecosystem-panel.collapsed .time-controls,
+.ecosystem-panel.collapsed .sound-controls,
 .ecosystem-panel.collapsed .water-panel {
   display: none;
 }
 
 .time-controls,
+.sound-controls,
 .water-panel {
   display: grid;
   gap: 7px;
@@ -238,9 +240,22 @@ h2 {
 }
 
 .time-controls strong,
+.sound-controls strong,
 .water-panel strong,
 .water-panel b {
   color: var(--text);
+}
+
+.sound-controls label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sound-controls input[type="range"] {
+  width: 130px;
+  accent-color: var(--accent-2);
 }
 
 .water-alerts {

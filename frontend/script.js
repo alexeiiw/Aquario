@@ -27,6 +27,9 @@ const lightTextEl = document.querySelector('#lightText');
 const waterAlertsEl = document.querySelector('#waterAlerts');
 const ecosystemPanelEl = document.querySelector('.ecosystem-panel');
 const ecosystemToggleEl = document.querySelector('#ecosystemToggle');
+const soundToggleEl = document.querySelector('#soundToggle');
+const soundVolumeEl = document.querySelector('#soundVolume');
+const soundStatusEl = document.querySelector('#soundStatus');
 const animalInspectorEl = document.querySelector('#animalInspector');
 const inspectorCloseEl = document.querySelector('#inspectorClose');
 const inspectorNameEl = document.querySelector('#inspectorName');
@@ -42,6 +45,9 @@ const inspectorWarningEl = document.querySelector('#inspectorWarning');
 let state = null;
 let selectedAnimalKey = null;
 let bubbles = Array.from({ length: 34 }, () => makeBubble());
+let soundContext = null;
+let soundGain = null;
+let filterSoundEnabled = false;
 
 socket.on('state:update', (newState) => {
   state = newState;
@@ -81,6 +87,21 @@ ecosystemToggleEl.addEventListener('click', () => {
   ecosystemToggleEl.textContent = isCollapsed ? 'Mostrar panel' : 'Ocultar panel';
   ecosystemToggleEl.setAttribute('aria-expanded', String(!isCollapsed));
   localStorage.setItem('ecosystemPanelCollapsed', String(isCollapsed));
+});
+
+soundVolumeEl.value = localStorage.getItem('aquariumSoundVolume') || soundVolumeEl.value;
+soundVolumeEl.addEventListener('input', () => {
+  localStorage.setItem('aquariumSoundVolume', soundVolumeEl.value);
+  if (soundGain) soundGain.gain.value = getSoundVolume();
+});
+
+soundToggleEl.addEventListener('click', () => {
+  if (filterSoundEnabled) {
+    soundContext.suspend();
+    setFilterSoundEnabled(false);
+    return;
+  }
+  startFilterSound();
 });
 
 canvas.addEventListener('click', (event) => {
@@ -151,6 +172,48 @@ function renderMessages() {
     </article>
   `).join('');
   if (shouldStickToBottom) messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function getSoundVolume() {
+  return (Number(soundVolumeEl.value) / 100) * 0.045;
+}
+
+function setFilterSoundEnabled(enabled) {
+  filterSoundEnabled = enabled;
+  soundToggleEl.textContent = enabled ? 'Silenciar sonido' : 'Activar sonido';
+  soundToggleEl.setAttribute('aria-pressed', String(enabled));
+  soundStatusEl.textContent = enabled ? 'Filtro suave activo' : 'Filtro suave apagado';
+}
+
+async function startFilterSound() {
+  if (!soundContext) {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) {
+      soundStatusEl.textContent = 'Este navegador no permite sonido ambiental.';
+      return;
+    }
+    soundContext = new AudioContext();
+    soundGain = soundContext.createGain();
+    soundGain.gain.value = getSoundVolume();
+    soundGain.connect(soundContext.destination);
+
+    const noise = soundContext.createBufferSource();
+    const buffer = soundContext.createBuffer(1, soundContext.sampleRate * 2, soundContext.sampleRate);
+    const samples = buffer.getChannelData(0);
+    for (let index = 0; index < samples.length; index += 1) samples[index] = Math.random() * 2 - 1;
+    noise.buffer = buffer;
+    noise.loop = true;
+
+    const filter = soundContext.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = 850;
+    filter.Q.value = 0.55;
+    noise.connect(filter).connect(soundGain);
+    noise.start();
+  }
+
+  await soundContext.resume();
+  setFilterSoundEnabled(true);
 }
 
 function renderInspector() {
