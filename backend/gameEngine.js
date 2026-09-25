@@ -246,6 +246,14 @@ const PLANT_DEFS = {
     maxHeight: 118,
     nutrientUse: 0.13,
     color: '#22c55e'
+  },
+  vallisneria: {
+    nombre: 'Vallisneria',
+    growthPerHour: 0.9,
+    maxHeight: 190,
+    initialHeight: 48,
+    nutrientUse: 0.17,
+    color: '#4ade80'
   }
 };
 
@@ -394,7 +402,7 @@ function createPlant(especie) {
     especie,
     nombre: def.nombre,
     edadEnHoras: 0,
-    altura: randomBetween(18, 28),
+    altura: randomBetween(def.initialHeight || 18, (def.initialHeight || 18) + 10),
     x: randomBetween(80, 880),
     y: 560,
     color: def.color
@@ -1317,7 +1325,7 @@ export class GameEngine extends EventEmitter {
   }
 
   buildHelpMessage() {
-    return 'Ayuda: lista o inventario para ver habitantes por categoria. Peces: neon, guppy, betta, molly, angel/escalar, cebra, corydora, platy, xipho, otocinclus, rasbora, tetra, ramirezi, gourami y ancistrus. Invertebrados: caracoles neritina/manzana/planorbis y gambas cherry/amano/fantasma. Flora: plantas anubia/ambulia, algas verde/filamentosa y maderas mopani/manzanita/spider/cholla/manglar. Ecosistema: alimenta, limpia muertos, limpia el filtro, enciende/apaga la luz, calidad del agua, pausa, tiempo rapido/muy rapido/lento/normal.';
+    return 'Ayuda: lista o inventario para ver habitantes por categoria. Peces: neon, guppy, betta, molly, angel/escalar, cebra, corydora, platy, xipho, otocinclus, rasbora, tetra, ramirezi, gourami y ancistrus. Invertebrados: caracoles neritina/manzana/planorbis y gambas cherry/amano/fantasma. Flora: plantas anubia/ambulia/vallisneria, algas verde/filamentosa y maderas mopani/manzanita/spider/cholla/manglar. Ecosistema: alimenta, limpia muertos, limpia el filtro, enciende/apaga la luz, calidad del agua, pausa, tiempo rapido/muy rapido/lento/normal.';
   }
 
   buildMasterMenuMessage() {
@@ -1339,7 +1347,7 @@ export class GameEngine extends EventEmitter {
       `Peces: ${Object.keys(FISH_DEFS).join(', ')}.`,
       'Caracoles: neritina, manzana, planorbis.',
       'Gambas: cherry, amano, fantasma.',
-      'Plantas: anubia, ambulia.',
+      'Plantas: anubia, ambulia, vallisneria.',
       'Algas: verde, filamentosa.',
       'Maderas: mopani, manzanita, spider, cholla, manglar.',
       'Alias: beta=betta, escalar/pez angel=angel, danio=cebra, oto=otocinclus, arlequin=rasbora, cardinal=tetra, pleco=ancistrus, raiz=manzanita, rama=manzanita.'
@@ -1356,7 +1364,7 @@ export class GameEngine extends EventEmitter {
       'agrega un betta;',
       'compra dos mollys y un otocinclus;',
       'agrega gambas cherry;',
-      'pon una anubia, alga verde y madera mopani;',
+      'pon una vallisneria, alga verde y madera mopani;',
       'limpia el filtro;',
       'apaga la luz;',
       'alimenta el acuario;',

@@ -1,6 +1,6 @@
 const validFish = ['neon', 'guppy', 'betta', 'molly', 'angel', 'cebra', 'corydora', 'platy', 'xipho', 'otocinclus', 'rasbora', 'tetra', 'ramirezi', 'gourami', 'ancistrus'];
 const validInvertebrates = ['neritina', 'manzana', 'planorbis', 'cherry', 'amano', 'fantasma'];
-const validPlants = ['anubia', 'ambulia'];
+const validPlants = ['anubia', 'ambulia', 'vallisneria'];
 const validAlgae = ['verde', 'filamentosa'];
 const validWoods = ['mopani', 'manzanita', 'spider', 'cholla', 'manglar'];
 
@@ -82,7 +82,7 @@ function clarificationForCategory(category, text) {
   const questions = {
     pez: '¿Qué pez deseas agregar? Puedes elegir neon, guppy, betta, molly, angel, cebra, corydora, platy, xipho, otocinclus, rasbora, tetra, ramirezi, gourami o ancistrus.',
     invertebrado: '¿Qué deseas agregar: caracol neritina, manzana, planorbis o gamba cherry, amano o fantasma?',
-    planta: '¿Qué planta deseas agregar: anubia o ambulia?',
+    planta: '¿Qué planta deseas agregar: anubia, ambulia o vallisneria?',
     alga: '¿Qué tipo de alga deseas agregar: verde o filamentosa?',
     madera: '¿Qué madera deseas agregar: mopani, manzanita, spider, cholla o manglar?'
   };
@@ -110,7 +110,7 @@ function speciesAliases(species) {
     gourami: ['gourami', 'gouramis'], ancistrus: ['ancistrus', 'pleco'], cherry: ['cherry', 'cherrys', 'cereza'],
     fantasma: ['fantasma', 'fantasmas', 'ghost'], neritina: ['neritina', 'neritinas'],
     manzana: ['manzana', 'manzanas'], planorbis: ['planorbis'], amano: ['amano', 'amanos'],
-    anubia: ['anubia', 'anubias'], ambulia: ['ambulia', 'ambulias'],
+    anubia: ['anubia', 'anubias'], ambulia: ['ambulia', 'ambulias'], vallisneria: ['vallisneria', 'vallis', 'valisneria'],
     filamentosa: ['filamentosa', 'filamentosas', 'filament'], verde: ['verde', 'verdes'],
     mopani: ['mopani'], manzanita: ['manzanita', 'rama', 'ramas', 'raiz', 'raices'],
     spider: ['spider', 'spider wood'], cholla: ['cholla'], manglar: ['manglar']

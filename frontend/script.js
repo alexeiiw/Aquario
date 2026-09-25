@@ -45,6 +45,7 @@ const inspectorWarningEl = document.querySelector('#inspectorWarning');
 let state = null;
 let selectedAnimalKey = null;
 let bubbles = Array.from({ length: 34 }, () => makeBubble());
+let particles = Array.from({ length: 42 }, () => makeParticle());
 let soundContext = null;
 let soundGain = null;
 let filterSoundEnabled = false;
@@ -311,7 +312,11 @@ function resizeCanvasToDisplaySize() {
 
 function drawAquarium() {
   drawWater();
+  drawBackgroundPlants();
+  drawLightRays();
+  drawParticles();
   drawBubbles();
+  drawRocks();
   drawWoods();
   drawPlants();
   drawAlgae();
@@ -319,6 +324,7 @@ function drawAquarium() {
   drawInvertebrates();
   drawFood();
   drawFish();
+  drawWaterConditions();
   drawSelectedAnimal();
   drawOverlay();
 }
@@ -346,6 +352,8 @@ function drawWoods() {
     ctx.scale(wood.escala || 1, wood.escala || 1);
     ctx.lineCap = 'round';
 
+    const branchCount = wood.especie === 'spider' ? 5 : wood.especie === 'manzanita' ? 4 : 3;
+    const branchWidth = wood.especie === 'cholla' ? 9 : 6;
     ctx.strokeStyle = wood.accent || '#3f1f0f';
     ctx.lineWidth = 18;
     ctx.beginPath();
@@ -363,12 +371,21 @@ function drawWoods() {
     ctx.stroke();
 
     ctx.strokeStyle = wood.accent || '#3f1f0f';
-    ctx.lineWidth = 6;
-    for (let i = -1; i <= 1; i += 1) {
+    ctx.lineWidth = branchWidth;
+    for (let i = 0; i < branchCount; i += 1) {
+      const offset = i - (branchCount - 1) / 2;
       ctx.beginPath();
-      ctx.moveTo(-4 + i * 18, -5);
-      ctx.lineTo(-22 + i * 20, -32 - i * 8);
+      ctx.moveTo(8 + offset * 16, -5);
+      ctx.lineTo(-12 + offset * 22, -30 - Math.abs(offset) * 9);
       ctx.stroke();
+    }
+    if (wood.especie === 'cholla') {
+      ctx.fillStyle = '#2f160a';
+      for (let i = 0; i < 3; i += 1) {
+        ctx.beginPath();
+        ctx.arc(-24 + i * 30, -5 + (i % 2) * 5, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
     ctx.restore();
   }
@@ -501,6 +518,12 @@ function drawWater() {
     ctx.fill();
   }
 
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.17)';
+  for (let i = 0; i < 4; i += 1) {
+    const y = 18 + i * 9 + Math.sin(Date.now() / 700 + i) * 2;
+    ctx.fillRect(0, y, 960, 1.2);
+  }
+
   const sand = ctx.createLinearGradient(0, 540, 0, 620);
   sand.addColorStop(0, '#c0843f');
   sand.addColorStop(1, '#7c4a20');
@@ -514,14 +537,31 @@ function drawWater() {
   ctx.lineTo(0, 620);
   ctx.closePath();
   ctx.fill();
+
+  for (let x = 20; x < 960; x += 34) {
+    const y = 568 + ((x * 13) % 34);
+    ctx.fillStyle = x % 3 === 0 ? '#75451f' : '#d6a55e';
+    ctx.globalAlpha = 0.45;
+    ctx.beginPath();
+    ctx.ellipse(x, y, 3 + (x % 7), 1.5 + (x % 3), 0.15, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
 }
 
 function drawBubbles() {
-  ctx.strokeStyle = 'rgba(219, 245, 255, 0.45)';
+  if (!state?.equipos?.oxigenacionActiva) return;
+  const capacity = (state.equipos.filtroNivel ?? 100) / 100;
+  const bubbleAlpha = 0.18 + Math.max(0, capacity) * 0.38;
+  ctx.strokeStyle = `rgba(219, 245, 255, ${bubbleAlpha})`;
+  ctx.fillStyle = 'rgba(203, 213, 225, 0.58)';
+  ctx.beginPath();
+  ctx.roundRect(78, 536, 46, 10, 4);
+  ctx.fill();
   bubbles.forEach((bubble) => {
     bubble.y -= bubble.speed;
     bubble.x += Math.sin(Date.now() / 600 + bubble.phase) * 0.22;
-    if (bubble.y < -20) Object.assign(bubble, makeBubble(630));
+    if (bubble.y < -20) Object.assign(bubble, makeBubble(540));
 
     ctx.beginPath();
     ctx.arc(bubble.x, bubble.y, bubble.r, 0, Math.PI * 2);
@@ -533,6 +573,10 @@ function drawPlants() {
   if (!state) return;
   for (const plant of state.plantas) {
     const sway = Math.sin(Date.now() / 900 + plant.x) * 5;
+    if (plant.especie === 'vallisneria') {
+      drawVallisneria(plant, sway);
+      continue;
+    }
     ctx.strokeStyle = plant.color;
     ctx.lineWidth = plant.especie === 'ambulia' ? 3 : 7;
     ctx.lineCap = 'round';
@@ -615,6 +659,123 @@ function drawFish() {
     drawHungerBar(fish, size);
     ctx.restore();
   }
+}
+
+function drawVallisneria(plant, sway) {
+  ctx.save();
+  ctx.strokeStyle = plant.color;
+  ctx.lineCap = 'round';
+  for (let i = 0; i < 10; i += 1) {
+    const offset = (i - 4.5) * 4.5;
+    const leafHeight = plant.altura * (0.72 + (i % 4) * 0.08);
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.moveTo(plant.x + offset, plant.y);
+    ctx.bezierCurveTo(
+      plant.x + offset + sway * 0.35,
+      plant.y - leafHeight * 0.35,
+      plant.x + offset - sway * 1.8,
+      plant.y - leafHeight * 0.72,
+      plant.x + offset + sway * 1.25,
+      plant.y - leafHeight
+    );
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawBackgroundPlants() {
+  ctx.save();
+  ctx.globalAlpha = 0.23;
+  ctx.strokeStyle = '#14532d';
+  ctx.lineCap = 'round';
+  for (let cluster = 0; cluster < 10; cluster += 1) {
+    const baseX = 42 + cluster * 102;
+    for (let leaf = 0; leaf < 5; leaf += 1) {
+      const offset = (leaf - 2) * 7;
+      const height = 105 + ((cluster * 17 + leaf * 23) % 95);
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(baseX + offset, 555);
+      ctx.quadraticCurveTo(baseX + offset + Math.sin(Date.now() / 1100 + cluster) * 12, 555 - height * 0.55, baseX + offset * 0.5, 555 - height);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+function drawLightRays() {
+  if (!state?.luzActiva || state.config?.fase !== 'dia') return;
+  ctx.save();
+  ctx.globalAlpha = 0.12;
+  for (let i = 0; i < 4; i += 1) {
+    const x = 100 + i * 260 + Math.sin(Date.now() / 1800 + i) * 38;
+    const gradient = ctx.createLinearGradient(x, 0, x + 90, 520);
+    gradient.addColorStop(0, 'rgba(224, 242, 254, 0.72)');
+    gradient.addColorStop(1, 'rgba(224, 242, 254, 0)');
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.moveTo(x - 42, 0);
+    ctx.lineTo(x + 42, 0);
+    ctx.lineTo(x + 134, 540);
+    ctx.lineTo(x - 92, 540);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawParticles() {
+  const health = state?.calidadAgua?.salud ?? 92;
+  ctx.save();
+  ctx.fillStyle = health < 60 ? 'rgba(194, 153, 89, 0.28)' : 'rgba(226, 232, 240, 0.16)';
+  for (const particle of particles) {
+    particle.x += particle.speed;
+    particle.y += Math.sin(Date.now() / 1100 + particle.phase) * 0.08;
+    if (particle.x > 970) Object.assign(particle, makeParticle(true));
+    ctx.beginPath();
+    ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawRocks() {
+  const rocks = [[210, 552, 37, 17], [252, 560, 25, 12], [690, 557, 42, 18], [742, 564, 22, 11], [835, 548, 31, 15]];
+  ctx.save();
+  for (const [x, y, width, height] of rocks) {
+    const gradient = ctx.createLinearGradient(x, y - height, x, y + height);
+    gradient.addColorStop(0, '#94a3b8');
+    gradient.addColorStop(1, '#334155');
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.ellipse(x, y, width, height, -0.15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(226, 232, 240, 0.22)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawWaterConditions() {
+  if (!state) return;
+  const woods = state.maderas?.length || 0;
+  const health = state.calidadAgua.salud;
+  ctx.save();
+  if (woods > 0) {
+    ctx.fillStyle = `rgba(146, 64, 14, ${Math.min(woods * 0.018, 0.11)})`;
+    ctx.fillRect(0, 0, 960, 620);
+  }
+  if (health < 75) {
+    ctx.fillStyle = `rgba(15, 49, 64, ${Math.min((75 - health) / 150, 0.22)})`;
+    ctx.fillRect(0, 0, 960, 620);
+  }
+  if (!state.luzActiva || state.config?.fase === 'noche') {
+    ctx.fillStyle = 'rgba(2, 12, 32, 0.23)';
+    ctx.fillRect(0, 0, 960, 620);
+  }
+  ctx.restore();
 }
 
 function drawSchoolLinks() {
@@ -901,12 +1062,22 @@ function drawOverlay() {
   ctx.fillText('Usa el chat para agregar peces, caracoles, gambas y plantas de agua dulce.', 480, 318);
 }
 
-function makeBubble(startY = Math.random() * 620) {
+function makeBubble(startY = Math.random() * 540) {
   return {
-    x: Math.random() * 960,
+    x: 101 + (Math.random() - 0.5) * 42,
     y: startY,
     r: 2 + Math.random() * 7,
     speed: 0.25 + Math.random() * 1.1,
+    phase: Math.random() * 10
+  };
+}
+
+function makeParticle(fromLeft = false) {
+  return {
+    x: fromLeft ? -8 : Math.random() * 960,
+    y: 55 + Math.random() * 470,
+    radius: 0.5 + Math.random() * 1.3,
+    speed: 0.05 + Math.random() * 0.18,
     phase: Math.random() * 10
   };
 }

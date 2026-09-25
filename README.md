@@ -1,6 +1,6 @@
 # Acuario Virtual 2D Inteligente
 
-Version `1.7.0`.
+Version `1.8.0`.
 
 Simulador web estilo Tamagotchi de un acuario 2D de agua dulce. El usuario controla el ecosistema desde un chat; un parser local interpreta comandos en espanol y el backend mantiene la simulacion, persistencia, tiempo, calidad del agua, hambre, crecimiento, reproduccion y compatibilidad de especies.
 
@@ -77,6 +77,14 @@ rm -f backend/data/aquarium-state.json
 - Usa `cambio de agua 30%` para reducir amonio, nitritos y nitratos.
 - Escribe `lista`, `inventario`, `habitantes` o `que peces tengo` para ver lo que vive en el acuario por categorias.
 - El cuadro de texto muestra comandos frecuentes: `menu`, `especies`, `inventario`, `estado`, `alimentar`, `agrega un...`.
+
+## Paisaje Vivo
+
+- El acuario combina fondo vegetal, sustrato con grava, rocas y maderas con siluetas y detalles distintos.
+- La luz de dia genera rayos suaves; de noche o con la luz apagada, el acuario se atenúa.
+- El agua responde visualmente al ecosistema: las maderas aportan un matiz ambar por taninos y una salud baja reduce la claridad.
+- El difusor de aire genera burbujas desde un punto del sustrato; su intensidad depende de la capacidad del filtro y desaparece si la oxigenacion esta apagada.
+- Particulas suaves, plantas que se mecen y vegetacion de fondo aportan profundidad sin ocultar a los animales.
 
 ## Ambiente Sonoro
 
@@ -206,6 +214,9 @@ Plantas reales:
 
 - `anubia`: crecimiento lento.
 - `ambulia`: crecimiento mas rapido y alto.
+- `vallisneria`: planta de fondo alta, de hojas largas y ondulantes; puede alcanzar `190` unidades de altura visual.
+
+Para crear una zona alta de fondo, usa varias vallisnerias, por ejemplo: `pon tres vallisnerias`. Tambien se reconoce `vallis` y `valisneria`.
 
 Algas, separadas de plantas:
 
@@ -387,6 +398,7 @@ Plantas y algas:
 
 - `agrega una anubia`
 - `pon tres ambulias`
+- `pon tres vallisnerias`
 - `agrega algas verdes`
 - `pon alga filamentosa`
 
@@ -419,5 +431,6 @@ El estado de la partida se guarda en `backend/data/aquarium-state.json`, que no 
 - El parser local interpreta el chat; el movimiento, hambre, agua, crecimiento, compatibilidad y reproduccion los maneja el backend.
 - `backend/llmService.js` conserva su nombre por compatibilidad interna, pero ya no usa un LLM: es un interprete determinista con validacion y aclaraciones.
 - No se deben versionar `backend/data/`, logs, `.env` ni `node_modules`.
+- La version `1.8.0` incorpora un paisaje vivo por capas, sustrato con rocas y grava, maderas diferenciadas, luz y claridad de agua reactivas, burbujeo localizado y vallisneria como planta alta de fondo.
 - La version `1.7.0` incorpora el panel de ecosistema en dos columnas para hacer visibles las alertas, y ambiente sonoro opcional de filtro con burbujas y volumen regulable.
 - Las funciones anteriores incluyen cardumen, reproduccion visual, filtro degradable, salud y estres individual, ciclo dia/noche, efectos de luz y taninos, refugios y comportamiento natural.
