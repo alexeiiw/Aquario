@@ -78,6 +78,25 @@ h1 {
   font-size: clamp(1.55rem, 2.2vw, 2.3rem);
 }
 
+.mode-switch {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.mode-switch button {
+  padding: 7px 11px;
+  border: 1px solid var(--border);
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.07);
+  font-size: 0.78rem;
+}
+
+.mode-switch button.active {
+  color: #03202e;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+}
+
 h2 {
   font-size: 1.45rem;
 }
@@ -112,6 +131,41 @@ h2 {
   position: relative;
   min-width: 0;
   height: 100%;
+}
+
+.mode-only { display: none; }
+body[data-mode="dulce"] .freshwater-only { display: inline; }
+body[data-mode="dulce"] .status-grid .freshwater-only { display: block; }
+body[data-mode="marino"] .marine-only { display: inline; }
+body[data-mode="marino"] .status-grid .marine-only { display: block; }
+body[data-mode="marino"] .freshwater-only { display: none !important; }
+
+body[data-mode="marino"] {
+  --accent: #22d3ee;
+  --accent-2: #a78bfa;
+  --panel: rgba(8, 28, 54, 0.9);
+  --panel-strong: rgba(17, 28, 65, 0.96);
+  --border: rgba(103, 232, 249, 0.22);
+}
+
+body[data-mode="marino"] canvas {
+  background: #082f49;
+}
+
+.learning-tip {
+  margin: 4px 0 0;
+  padding: 9px 10px;
+  border-left: 3px solid var(--accent-2);
+  border-radius: 7px;
+  color: #dbeafe;
+  background: rgba(99, 102, 241, 0.15);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.coral-alert {
+  color: #fce7f3;
+  background: rgba(219, 39, 119, 0.19);
 }
 
 .animal-inspector {

@@ -12,14 +12,19 @@
         <header class="panel-header">
           <div>
             <p class="eyebrow">Tamagotchi acuatico</p>
-            <h1>Acuario Virtual</h1>
+            <h1 id="aquariumTitle">Acuario de agua dulce</h1>
+            <div class="mode-switch" role="group" aria-label="Tipo de acuario">
+              <button id="freshwaterMode" type="button" aria-pressed="true">Agua dulce</button>
+              <button id="marineMode" type="button" aria-pressed="false">Marino</button>
+            </div>
           </div>
           <div class="status-grid">
             <span><strong id="fishCount">0</strong> peces</span>
             <span><strong id="invertebrateCount">0</strong> invertebrados</span>
-            <span><strong id="plantCount">0</strong> plantas</span>
-            <span><strong id="algaeCount">0</strong> algas</span>
-            <span><strong id="woodCount">0</strong> maderas</span>
+            <span class="mode-only freshwater-only"><strong id="plantCount">0</strong> plantas</span>
+            <span class="mode-only freshwater-only"><strong id="algaeCount">0</strong> algas</span>
+            <span class="mode-only freshwater-only"><strong id="woodCount">0</strong> maderas</span>
+            <span id="coralCountWrap" class="mode-only marine-only"><strong id="coralCount">0</strong> corales</span>
             <span><strong id="nutrients">0</strong>% nutrientes</span>
             <span><strong id="gameHours">0</strong> h</span>
           </div>
@@ -31,7 +36,7 @@
               <button id="inspectorClose" class="inspector-close" type="button" aria-label="Cerrar inspeccion">Cerrar</button>
               <p class="eyebrow">Inspeccion</p>
               <h3 id="inspectorName">Selecciona un animal</h3>
-              <p id="inspectorSpecies" class="inspector-species">Haz click sobre un pez, caracol o gamba.</p>
+              <p id="inspectorSpecies" class="inspector-species">Haz click sobre un pez, invertebrado o coral.</p>
               <dl>
                 <div><dt>Estado</dt><dd id="inspectorStatus">-</dd></div>
                 <div><dt>Edad</dt><dd id="inspectorAge">-</dd></div>
@@ -69,10 +74,20 @@
               <span>Nitritos: <b id="nitriteText">0%</b></span>
               <span>Nitratos: <b id="nitrateText">8%</b></span>
               <span>Oxigeno: <b id="oxygenText">92%</b></span>
+              <span class="mode-only marine-only">Filtro biológico: <b>amonio → nitrito → nitrato</b></span>
               <span>pH: <b id="phText">7.20</b> · Fase: <b id="phaseText">dia</b></span>
-              <span>Filtro: <b id="filterText">activo</b> · Capacidad: <b id="filterLevelText">100%</b></span>
-              <span>Oxigenacion: <b id="aerationText">activa</b> · Luz: <b id="lightText">encendida</b></span>
+              <span class="mode-only marine-only">Salinidad: <b id="salinityText">35.0 ppt</b></span>
+              <span class="mode-only marine-only">Temperatura: <b id="temperatureText">25.0 °C</b></span>
+              <span class="mode-only marine-only">Alcalinidad: <b id="alkalinityText">8.5 dKH</b></span>
+              <span class="mode-only marine-only">Calcio: <b id="calciumText">420 ppm</b></span>
+              <span class="mode-only marine-only">Ciclado: <b id="cyclingText">0%</b></span>
+              <span class="mode-only freshwater-only">Filtro: <b id="filterText">activo</b> · Capacidad: <b id="filterLevelText">100%</b></span>
+              <span class="mode-only marine-only">Skimmer: <b id="skimmerText">activo</b> · Circulación: <b id="circulationText">activa</b></span>
+              <span class="mode-only marine-only">Ciclo del filtro: <b id="cyclingEquipmentText">en aprendizaje</b></span>
+              <span class="mode-only freshwater-only">Oxigenacion: <b id="aerationText">activa</b> · Luz: <b id="lightText">encendida</b></span>
+              <span class="mode-only marine-only">Oxigenación: <b id="aerationTextMarine">activa</b> · Luz del arrecife: <b id="lightTextMarine">encendida</b></span>
               <div id="waterAlerts" class="water-alerts" aria-live="polite"></div>
+              <p id="learningTip" class="learning-tip" aria-live="polite"></p>
             </div>
           </section>
         </div>
@@ -82,13 +97,13 @@
         <div class="chat-header">
           <p class="eyebrow">Control inteligente local</p>
           <h2>Chat del acuario</h2>
-          <p>Escribe en lenguaje natural. Usa <strong>menu</strong> para ayuda, especies, inventario, ideas y estado.</p>
+          <p id="chatIntro">Escribe en lenguaje natural. Usa <strong>menu</strong> para ayuda, especies, inventario, ideas y estado.</p>
         </div>
 
         <div id="messages" class="messages" aria-live="polite"></div>
 
         <form id="chatForm" class="chat-form">
-          <textarea id="chatInput" rows="3" placeholder="Comandos: menu · especies · inventario · estado · alimentar · agrega un betta · madera mopani"></textarea>
+          <textarea id="chatInput" rows="3" placeholder="Comandos de agua dulce: menu · especies · inventario · estado · alimentar · agrega un betta · vallisneria"></textarea>
           <button type="submit">Enviar</button>
         </form>
       </aside>

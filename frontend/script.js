@@ -9,6 +9,11 @@ const invertebrateCountEl = document.querySelector('#invertebrateCount');
 const plantCountEl = document.querySelector('#plantCount');
 const algaeCountEl = document.querySelector('#algaeCount');
 const woodCountEl = document.querySelector('#woodCount');
+const coralCountEl = document.querySelector('#coralCount');
+const aquariumTitleEl = document.querySelector('#aquariumTitle');
+const chatIntroEl = document.querySelector('#chatIntro');
+const freshwaterModeEl = document.querySelector('#freshwaterMode');
+const marineModeEl = document.querySelector('#marineMode');
 const nutrientsEl = document.querySelector('#nutrients');
 const gameHoursEl = document.querySelector('#gameHours');
 const timeSpeedEl = document.querySelector('#timeSpeed');
@@ -20,11 +25,22 @@ const nitrateTextEl = document.querySelector('#nitrateText');
 const oxygenTextEl = document.querySelector('#oxygenText');
 const filterTextEl = document.querySelector('#filterText');
 const aerationTextEl = document.querySelector('#aerationText');
+const aerationTextMarineEl = document.querySelector('#aerationTextMarine');
 const phTextEl = document.querySelector('#phText');
 const phaseTextEl = document.querySelector('#phaseText');
 const filterLevelTextEl = document.querySelector('#filterLevelText');
 const lightTextEl = document.querySelector('#lightText');
+const lightTextMarineEl = document.querySelector('#lightTextMarine');
+const salinityTextEl = document.querySelector('#salinityText');
+const temperatureTextEl = document.querySelector('#temperatureText');
+const alkalinityTextEl = document.querySelector('#alkalinityText');
+const calciumTextEl = document.querySelector('#calciumText');
+const cyclingTextEl = document.querySelector('#cyclingText');
+const skimmerTextEl = document.querySelector('#skimmerText');
+const circulationTextEl = document.querySelector('#circulationText');
+const cyclingEquipmentTextEl = document.querySelector('#cyclingEquipmentText');
 const waterAlertsEl = document.querySelector('#waterAlerts');
+const learningTipEl = document.querySelector('#learningTip');
 const ecosystemPanelEl = document.querySelector('.ecosystem-panel');
 const ecosystemToggleEl = document.querySelector('#ecosystemToggle');
 const soundToggleEl = document.querySelector('#soundToggle');
@@ -53,10 +69,14 @@ let bubbleTimer = null;
 
 socket.on('state:update', (newState) => {
   state = newState;
+  updateModeInterface();
   renderStats();
   renderMessages();
   renderInspector();
 });
+
+freshwaterModeEl.addEventListener('click', () => socket.emit('aquarium:mode', 'dulce'));
+marineModeEl.addEventListener('click', () => socket.emit('aquarium:mode', 'marino'));
 
 socket.on('connect_error', () => {
   addTransientSystemMessage('No se pudo conectar con el servidor.');
@@ -108,7 +128,7 @@ soundToggleEl.addEventListener('click', () => {
 });
 
 canvas.addEventListener('click', (event) => {
-  if (!state) return;
+    if (!state) return;
   const point = canvasEventToWorld(event);
   const animal = findAnimalAt(point.x, point.y);
   if (!animal) return;
@@ -140,6 +160,7 @@ function renderStats() {
   plantCountEl.textContent = state.plantas.length;
   algaeCountEl.textContent = state.algas.length;
   woodCountEl.textContent = state.maderas?.length || 0;
+  coralCountEl.textContent = state.corales?.length || 0;
   nutrientsEl.textContent = Math.round(state.nutrientes);
   gameHoursEl.textContent = Math.floor(state.horasJuego);
   timeSpeedEl.textContent = state.velocidadTiempo;
@@ -155,14 +176,43 @@ function renderStats() {
   nitrateTextEl.textContent = `${Math.round(water.nitratos)}%`;
   oxygenTextEl.textContent = `${Math.round(water.oxigeno)}%`;
   filterTextEl.textContent = state.equipos.filtroActivo ? 'activo' : 'apagado';
+  skimmerTextEl.textContent = state.equipos.skimmerActivo ? 'activo' : 'apagado';
+  circulationTextEl.textContent = state.equipos.circulacionActiva ? 'activa' : 'apagada';
+  const cycleProgress = state.cicloBiologico ? Math.round(state.cicloBiologico.horas / state.cicloBiologico.horasNecesarias * 100) : 100;
+  cyclingTextEl.textContent = `${cycleProgress}%`;
+  cyclingEquipmentTextEl.textContent = state.cicloBiologico?.listo ? 'completado (simulación)' : 'en progreso (simulación)';
   filterLevelTextEl.textContent = `${Math.round(state.equipos.filtroNivel ?? 100)}%`;
   aerationTextEl.textContent = state.equipos.oxigenacionActiva ? 'activa' : 'apagada';
+  aerationTextMarineEl.textContent = state.equipos.oxigenacionActiva ? 'activa' : 'apagada';
   phTextEl.textContent = Number(state.calidadAgua.ph ?? 7.2).toFixed(2);
   phaseTextEl.textContent = state.config?.fase || 'dia';
   lightTextEl.textContent = state.luzActiva ? 'encendida' : 'apagada';
+  lightTextMarineEl.textContent = state.luzActiva ? 'encendida' : 'apagada';
+  salinityTextEl.textContent = `${Number(water.salinidad ?? 0).toFixed(1)} ppt`;
+  temperatureTextEl.textContent = `${Number(water.temperatura ?? 0).toFixed(1)} °C`;
+  alkalinityTextEl.textContent = `${Number(water.alcalinidad ?? 0).toFixed(1)} dKH`;
+  calciumTextEl.textContent = `${Math.round(water.calcio ?? 0)} ppm`;
   waterAlertsEl.innerHTML = state.alertas?.length
-    ? state.alertas.map((alert) => `<span class="water-alert ${escapeHtml(alert.severidad)}">${escapeHtml(alert.texto)}</span>`).join('')
+    ? state.alertas.map((alert) => `<span class="water-alert ${escapeHtml(alert.severidad)} ${['salinidad', 'temperatura', 'alcalinidad', 'calcio', 'circulacion'].includes(alert.tipo) ? 'coral-alert' : ''}">${escapeHtml(alert.texto)}</span>`).join('')
     : '<span class="water-ok">Sin alertas activas</span>';
+  learningTipEl.textContent = state.aprendizaje || '';
+}
+
+function updateModeInterface() {
+  const marine = state?.modo === 'marino';
+  document.body.dataset.mode = marine ? 'marino' : 'dulce';
+  aquariumTitleEl.textContent = marine ? 'Arrecife marino' : 'Acuario de agua dulce';
+  freshwaterModeEl.classList.toggle('active', !marine);
+  marineModeEl.classList.toggle('active', marine);
+  freshwaterModeEl.setAttribute('aria-pressed', String(!marine));
+  marineModeEl.setAttribute('aria-pressed', String(marine));
+  canvas.setAttribute('aria-label', marine ? 'Arrecife marino animado' : 'Acuario de agua dulce animado');
+  input.placeholder = marine
+    ? 'Aprende y pregunta: menu · diagnostico · agrega pez payaso · coral hongo · que es salinidad · que es el ciclado'
+    : 'Comandos de agua dulce: menu · especies · inventario · estado · alimentar · betta · vallisneria';
+  chatIntroEl.innerHTML = marine
+    ? 'Acuario <strong>marino</strong> independiente. Pregunta por salinidad, ciclado, corales o escribe <strong>menu</strong> para aprender.'
+    : 'Acuario <strong>de agua dulce</strong>. Pregunta por amonio, nitritos, plantas o escribe <strong>menu</strong> para ver la ayuda.';
 }
 
 function renderMessages() {
@@ -265,12 +315,13 @@ function renderInspector() {
 
   animalInspectorEl.classList.remove('hidden');
   inspectorNameEl.textContent = animal.nombre || animal.tipo || animal.especie;
-  inspectorSpeciesEl.textContent = animal.latin ? `${animal.latin} · ${animal.kind === 'pez' ? 'Pez' : animal.grupo} · ${animal.sexo || 'sexo no registrado'}` : animal.kind;
+  inspectorSpeciesEl.textContent = animal.latin ? `${animal.latin} · ${animal.kind === 'pez' ? 'Pez' : animal.grupo} · ${animal.sexo || 'sexo no registrado'}` : animal.kind === 'coral' ? `Coral · luz ${animal.luz}` : animal.kind;
   inspectorStatusEl.textContent = getAnimalStatus(animal);
   inspectorAgeEl.textContent = formatAge(animal.edadEnHoras);
   inspectorHungerEl.textContent = `${Math.round(animal.hambre || 0)}%`;
   inspectorHealthEl.textContent = `${Math.round(animal.salud ?? 100)}%`;
   inspectorStressEl.textContent = `${Math.round(animal.estres ?? 0)}%`;
+  if (animal.kind === 'coral') inspectorStressEl.textContent = `${Math.round(animal.estres ?? 0)}% · ${animal.luz || 'luz media'}`;
   inspectorSizeEl.textContent = `${Math.round((animal.escala || 1) * 100)}%`;
 
   const warning = getAnimalWarning(animal);
@@ -281,7 +332,7 @@ function renderInspector() {
 function getSelectedAnimal() {
   if (!state || !selectedAnimalKey) return null;
   const [kind, id] = selectedAnimalKey.split(':');
-  const list = kind === 'pez' ? state.peces : state.invertebrados;
+  const list = kind === 'pez' ? state.peces : kind === 'coral' ? state.corales || [] : state.invertebrados;
   const animal = list.find((item) => item.id === id);
   return animal ? { ...animal, kind } : null;
 }
@@ -312,14 +363,19 @@ function resizeCanvasToDisplaySize() {
 
 function drawAquarium() {
   drawWater();
-  drawBackgroundPlants();
   drawLightRays();
+  if (state?.modo === 'marino') {
+    drawMarineReef();
+  } else {
+    drawBackgroundPlants();
+    drawRocks();
+    drawWoods();
+    drawPlants();
+    drawAlgae();
+  }
   drawParticles();
   drawBubbles();
-  drawRocks();
-  drawWoods();
-  drawPlants();
-  drawAlgae();
+  if (state?.modo === 'marino') drawCorals();
   drawEggs();
   drawInvertebrates();
   drawFood();
@@ -437,6 +493,10 @@ function drawInvertebrates() {
 
     if (animal.grupo === 'caracol') {
       drawSnail(animal, size);
+    } else if (animal.grupo === 'cangrejo') {
+      drawCrab(animal, size);
+    } else if (animal.grupo === 'gamba' && state.modo === 'marino') {
+      drawMarineShrimp(animal, size);
     } else {
       drawShrimp(animal, size);
     }
@@ -503,12 +563,21 @@ function drawShrimp(animal, size) {
 }
 
 function drawWater() {
+  const marine = state?.modo === 'marino';
   const gradient = ctx.createLinearGradient(0, 0, 0, 620);
-  gradient.addColorStop(0, '#075985');
-  gradient.addColorStop(0.45, '#0369a1');
-  gradient.addColorStop(1, '#082f49');
+  gradient.addColorStop(0, marine ? '#0e7490' : '#075985');
+  gradient.addColorStop(0.45, marine ? '#0369a1' : '#0369a1');
+  gradient.addColorStop(1, marine ? '#082f49' : '#082f49');
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, 960, 620);
+  if (marine) {
+    const ambient = ctx.createLinearGradient(0, 0, 960, 620);
+    ambient.addColorStop(0, 'rgba(34, 211, 238, 0.12)');
+    ambient.addColorStop(0.5, 'rgba(99, 102, 241, 0.05)');
+    ambient.addColorStop(1, 'rgba(14, 116, 144, 0.12)');
+    ctx.fillStyle = ambient;
+    ctx.fillRect(0, 0, 960, 620);
+  }
 
   ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
   for (let i = 0; i < 9; i += 1) {
@@ -525,8 +594,8 @@ function drawWater() {
   }
 
   const sand = ctx.createLinearGradient(0, 540, 0, 620);
-  sand.addColorStop(0, '#c0843f');
-  sand.addColorStop(1, '#7c4a20');
+  sand.addColorStop(0, marine ? '#f5e6c8' : '#c0843f');
+  sand.addColorStop(1, marine ? '#cbb994' : '#7c4a20');
   ctx.fillStyle = sand;
   ctx.beginPath();
   ctx.moveTo(0, 552);
@@ -540,13 +609,44 @@ function drawWater() {
 
   for (let x = 20; x < 960; x += 34) {
     const y = 568 + ((x * 13) % 34);
-    ctx.fillStyle = x % 3 === 0 ? '#75451f' : '#d6a55e';
+    ctx.fillStyle = marine ? (x % 3 === 0 ? '#e7d7b5' : '#fff2d3') : (x % 3 === 0 ? '#75451f' : '#d6a55e');
     ctx.globalAlpha = 0.45;
     ctx.beginPath();
     ctx.ellipse(x, y, 3 + (x % 7), 1.5 + (x % 3), 0.15, 0, Math.PI * 2);
     ctx.fill();
   }
   ctx.globalAlpha = 1;
+}
+
+function drawCrab(animal, size) {
+  ctx.strokeStyle = animal.accent;
+  ctx.lineWidth = 2;
+  for (let leg = -2; leg <= 2; leg += 1) {
+    ctx.beginPath();
+    ctx.moveTo(leg * size * 0.22, size * 0.1);
+    ctx.lineTo(leg * size * 0.48, size * 0.55);
+    ctx.stroke();
+  }
+  ctx.fillStyle = animal.color;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, size * 0.72, size * 0.48, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(-size * 0.8, -size * 0.25, size * 0.2, 0, Math.PI * 2);
+  ctx.arc(size * 0.8, -size * 0.25, size * 0.2, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawMarineShrimp(animal, size) {
+  drawShrimp(animal, size);
+  ctx.strokeStyle = '#fff7ed';
+  ctx.lineWidth = 1;
+  for (let stripe = -1; stripe <= 1; stripe += 1) {
+    ctx.beginPath();
+    ctx.moveTo(stripe * size * 0.3, -size * 0.35);
+    ctx.lineTo(stripe * size * 0.3, size * 0.35);
+    ctx.stroke();
+  }
 }
 
 function drawBubbles() {
@@ -758,13 +858,87 @@ function drawRocks() {
   ctx.restore();
 }
 
+function drawMarineReef() {
+  const reefBase = [[0, 552], [42, 530], [88, 542], [136, 510], [176, 536], [225, 505], [274, 538], [328, 518], [380, 548], [430, 512], [480, 536], [530, 500], [584, 532], [634, 510], [680, 546], [735, 514], [790, 538], [850, 503], [910, 537], [960, 520]];
+  ctx.save();
+  const rock = ctx.createLinearGradient(0, 490, 0, 615);
+  rock.addColorStop(0, '#64748b');
+  rock.addColorStop(1, '#1e293b');
+  ctx.fillStyle = rock;
+  ctx.beginPath();
+  ctx.moveTo(0, 620);
+  for (const [x, y] of reefBase) ctx.lineTo(x, y);
+  ctx.lineTo(960, 620);
+  ctx.closePath();
+  ctx.fill();
+  for (let i = 0; i < 72; i += 1) {
+    const x = (i * 137) % 950;
+    const y = 553 + ((i * 41) % 62);
+    ctx.fillStyle = i % 3 === 0 ? 'rgba(226, 232, 240, 0.3)' : 'rgba(15, 23, 42, 0.28)';
+    ctx.beginPath();
+    ctx.arc(x, y, 2 + (i % 4), 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawCorals() {
+  if (!state?.corales) return;
+  for (const coral of state.corales) {
+    const size = coral.tamano;
+    ctx.save();
+    ctx.translate(coral.x, coral.y);
+    ctx.fillStyle = coral.color;
+    ctx.strokeStyle = coral.color;
+    ctx.lineWidth = Math.max(3, size * 0.16);
+    if (coral.especie === 'acropora') {
+      ctx.lineCap = 'round';
+      for (let branch = -2; branch <= 2; branch += 1) {
+        ctx.beginPath();
+        ctx.moveTo(branch * size * 0.18, 0);
+        ctx.lineTo(branch * size * 0.2, -size * (0.8 + (2 - Math.abs(branch)) * 0.18));
+        ctx.moveTo(branch * size * 0.2, -size * 0.45);
+        ctx.lineTo(branch * size * 0.2 + size * 0.22, -size * 0.7);
+        ctx.stroke();
+      }
+    } else if (coral.especie === 'hongo') {
+      ctx.beginPath();
+      ctx.ellipse(0, -size * 0.18, size * 0.8, size * 0.48, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillRect(-size * 0.12, 0, size * 0.24, size * 0.55);
+      ctx.fillStyle = 'rgba(255,255,255,0.48)';
+      for (let dot = 0; dot < 5; dot += 1) {
+        ctx.beginPath();
+        ctx.arc((dot - 2) * size * 0.24, -size * 0.18, size * 0.055, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else {
+      const heads = coral.especie === 'euphyllia' ? 5 : 7;
+      for (let head = 0; head < heads; head += 1) {
+        const angle = (head / heads) * Math.PI * 2;
+        const x = Math.cos(angle) * size * 0.35;
+        const y = Math.sin(angle) * size * 0.22 - size * 0.25;
+        ctx.beginPath();
+        ctx.arc(x, y, size * (coral.especie === 'euphyllia' ? 0.28 : 0.2), 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.fillRect(-size * 0.12, -size * 0.14, size * 0.24, size * 0.55);
+    }
+    ctx.restore();
+  }
+}
+
 function drawWaterConditions() {
   if (!state) return;
   const woods = state.maderas?.length || 0;
   const health = state.calidadAgua.salud;
   ctx.save();
-  if (woods > 0) {
+  if (woods > 0 && state.modo !== 'marino') {
     ctx.fillStyle = `rgba(146, 64, 14, ${Math.min(woods * 0.018, 0.11)})`;
+    ctx.fillRect(0, 0, 960, 620);
+  }
+  if (state.modo === 'marino') {
+    ctx.fillStyle = 'rgba(8, 145, 178, 0.035)';
     ctx.fillRect(0, 0, 960, 620);
   }
   if (health < 75) {
@@ -920,7 +1094,43 @@ function drawGenericFish(fish, size) {
   ctx.closePath();
   ctx.fill();
 
-  if (fish.tipo === 'cebra') {
+  if (fish.tipo === 'payaso') {
+    ctx.strokeStyle = '#f8fafc';
+    ctx.lineWidth = size * 0.19;
+    for (const stripe of [-0.35, 0.35]) {
+      ctx.beginPath();
+      ctx.moveTo(size * stripe, -size * 0.38);
+      ctx.lineTo(size * stripe, size * 0.38);
+      ctx.stroke();
+    }
+  } else if (fish.tipo === 'gramma') {
+    ctx.fillStyle = '#facc15';
+    ctx.beginPath();
+    ctx.ellipse(-size * 0.48, 0, size * 0.48, size * 0.38, 0, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (fish.tipo === 'damisela') {
+    ctx.strokeStyle = '#a5f3fc';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-size * 0.65, -size * 0.22);
+    ctx.lineTo(size * 0.55, -size * 0.22);
+    ctx.stroke();
+  } else if (fish.tipo === 'cirujano_azul') {
+    ctx.strokeStyle = '#facc15';
+    ctx.lineWidth = size * 0.12;
+    ctx.beginPath();
+    ctx.moveTo(-size * 0.25, -size * 0.4);
+    ctx.lineTo(-size * 0.25, size * 0.4);
+    ctx.stroke();
+  } else if (fish.tipo === 'firefish') {
+    ctx.fillStyle = '#fef08a';
+    ctx.beginPath();
+    ctx.moveTo(size * 0.75, 0);
+    ctx.lineTo(size * 1.15, -size * 0.42);
+    ctx.lineTo(size * 1.25, size * 0.35);
+    ctx.closePath();
+    ctx.fill();
+  } else if (fish.tipo === 'cebra') {
     ctx.strokeStyle = fish.accent;
     ctx.lineWidth = 2;
     for (let i = -2; i <= 2; i += 1) {
@@ -1050,16 +1260,16 @@ function drawHungerBar(fish, size) {
 }
 
 function drawOverlay() {
-  if (!state || state.peces.length || state.invertebrados.length || state.plantas.length || state.algas.length || state.maderas?.length) return;
+  if (!state || state.peces.length || state.invertebrados.length || state.plantas.length || state.algas.length || state.maderas?.length || state.corales?.length) return;
   ctx.fillStyle = 'rgba(2, 6, 23, 0.38)';
   ctx.fillRect(0, 0, 960, 620);
   ctx.fillStyle = '#e0f2fe';
   ctx.font = '700 34px system-ui';
   ctx.textAlign = 'center';
-  ctx.fillText('Tu acuario esta vacio', 480, 280);
+  ctx.fillText(state.modo === 'marino' ? 'Tu arrecife esta vacio' : 'Tu acuario esta vacio', 480, 280);
   ctx.font = '500 18px system-ui';
   ctx.fillStyle = '#bae6fd';
-  ctx.fillText('Usa el chat para agregar peces, caracoles, gambas y plantas de agua dulce.', 480, 318);
+  ctx.fillText(state.modo === 'marino' ? 'Completa el ciclado y consulta el diagnostico antes de agregar habitantes.' : 'Usa el chat para agregar peces, caracoles, gambas y plantas de agua dulce.', 480, 318);
 }
 
 function makeBubble(startY = Math.random() * 540) {
@@ -1093,7 +1303,8 @@ function canvasEventToWorld(event) {
 function findAnimalAt(x, y) {
   const animals = [
     ...state.peces.map((animal) => ({ ...animal, kind: 'pez' })),
-    ...state.invertebrados.map((animal) => ({ ...animal, kind: 'invertebrado' }))
+    ...state.invertebrados.map((animal) => ({ ...animal, kind: 'invertebrado' })),
+    ...(state.corales || []).map((animal) => ({ ...animal, kind: 'coral' }))
   ];
 
   for (let i = animals.length - 1; i >= 0; i -= 1) {
@@ -1120,6 +1331,9 @@ function getAnimalStatus(animal) {
 
 function getAnimalWarning(animal) {
   if (!animal.vivo) return 'Retiralo con "limpia los muertos" para proteger la calidad del agua.';
+  if (animal.kind === 'coral') return animal.salud < 55 ? 'El coral muestra estrés en la simulación. Revisa luz, circulación, salinidad, temperatura, alcalinidad y calcio antes de hacer ajustes graduales.' : 'Aprendizaje: los corales son animales; revisa luz, flujo de agua y estabilidad de salinidad, alcalinidad y calcio.';
+  if (state.modo === 'marino' && animal.tipo === 'firefish') return 'Aprendizaje: este pez dardo puede saltar cuando se asusta; los acuarios reales deben tener una tapa segura.';
+  if (state.modo === 'marino' && animal.grupo === 'cangrejo') return 'Aprendizaje: ofrece conchas vacías de varios tamaños; los ermitaños pueden competir por ellas.';
   const fishTypes = state.peces.filter((fish) => fish.vivo).map((fish) => fish.tipo);
   const hasBetta = fishTypes.includes('betta');
   const hasAngel = fishTypes.includes('angel');

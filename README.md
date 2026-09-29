@@ -1,8 +1,8 @@
 # Acuario Virtual 2D Inteligente
 
-Version `1.8.0`.
+Version `2.0.0`.
 
-Simulador web estilo Tamagotchi de un acuario 2D de agua dulce. El usuario controla el ecosistema desde un chat; un parser local interpreta comandos en espanol y el backend mantiene la simulacion, persistencia, tiempo, calidad del agua, hambre, crecimiento, reproduccion y compatibilidad de especies.
+Simulador didáctico web estilo Tamagotchi de acuarios 2D de agua dulce y marino. El selector cambia entre dos ecosistemas con partidas, habitantes, parámetros, inventario y chat independientes. Un parser local interpreta comandos y preguntas educativas en español.
 
 ## Inicio rapido en Codespaces
 
@@ -64,6 +64,7 @@ rm -f backend/data/aquarium-state.json
 
 - La pecera ocupa la mayor parte de la pantalla.
 - Puedes hacer click sobre peces, caracoles o gambas para inspeccionar especie, edad, hambre, estado, tamano y advertencias.
+- En el arrecife puedes inspeccionar peces, invertebrados y corales; la tarjeta explica necesidades y señales educativas.
 - El panel flotante muestra tiempo y calidad del agua.
 - Las maderas se pueden agregar desde el chat y aparecen en el inventario.
 - El panel muestra fase del dia, luz, pH y capacidad del filtro.
@@ -77,6 +78,8 @@ rm -f backend/data/aquarium-state.json
 - Usa `cambio de agua 30%` para reducir amonio, nitritos y nitratos.
 - Escribe `lista`, `inventario`, `habitantes` o `que peces tengo` para ver lo que vive en el acuario por categorias.
 - El cuadro de texto muestra comandos frecuentes: `menu`, `especies`, `inventario`, `estado`, `alimentar`, `agrega un...`.
+- El selector `Agua dulce / Marino` cambia entre partidas independientes: habitantes, parámetros, inventario y mensajes se guardan por separado.
+- El encabezado del chat y la lista de comandos cambian con el selector para mostrar la ayuda del ecosistema activo.
 
 ## Paisaje Vivo
 
@@ -93,6 +96,22 @@ rm -f backend/data/aquarium-state.json
 - Usa el control de volumen para regularlo o `Silenciar sonido` para detenerlo.
 - El sonido se genera en el navegador; no descarga archivos ni requiere servicios externos.
 - El volumen elegido se conserva en el navegador para la siguiente visita.
+
+## Modo Marino y Aprendizaje
+
+- El selector `Marino` abre un arrecife independiente; volver a `Agua dulce` conserva intacta la partida dulce.
+- El modo marino tiene paisaje de arrecife, peces, invertebrados, corales y controles simulados para skimmer y circulación.
+- Las mediciones incluyen salinidad (`ppt`, partes por mil), temperatura (`°C`), alcalinidad (`dKH`) y calcio (`ppm`). Los avisos explican qué significa cada valor y sugieren pasos prudentes.
+- Rangos simplificados de aprendizaje: salinidad `33–36 ppt`, temperatura `23–27 °C`, alcalinidad `7–10 dKH`, calcio `380–460 ppm`.
+- El filtro empieza en una fase de ciclado didáctica de 72 horas de juego y no permite introducir habitantes antes de completarla. En acuarios reales el ciclado se confirma midiendo amonio y nitrito en cero de forma estable; esperar un plazo fijo no basta.
+- Pregunta `¿qué es la salinidad?`, `¿qué significa alcalinidad?`, `¿qué es el calcio?`, `¿qué es un skimmer?` o `¿cómo funciona el ciclado?` para recibir explicaciones.
+- La evaporación concentra la sal: para reponer evaporación real se usa agua dulce purificada; para cambios parciales, agua salada preparada con una mezcla específica marina, igualada en temperatura y salinidad.
+- El cirujano azul aparece como especie de estudio, pero no se puede agregar al tanque simulado por el espacio que requiere. Las reglas de peces territoriales y corales también se explican en el chat.
+- Límite educativo: el arrecife simulado admite como máximo 12 peces e invertebrados. En acuarios reales la capacidad depende del volumen, el equipo y las necesidades de cada especie.
+- `¿necesita un cambio de agua?` y `diagnostico` consultan las alertas sin aplicar cambios. `¿cómo hago un cambio de agua?` explica el procedimiento; para ejecutarlo se indica un porcentaje.
+- `¿cómo está la salinidad?` muestra las mediciones marinas. Una consulta que incluya `¿necesita` devuelve diagnóstico y no aplica acciones.
+- `repón evaporación` practica el rellenado: acerca gradualmente la salinidad al objetivo sin retirar nitratos. Representa reponer con agua dulce purificada, no hacer un cambio parcial.
+- Es una simulación educativa, no reemplaza pruebas reales del agua, investigación de compatibilidad ni asesoría para mantener animales reales.
 
 ## Tiempo
 
@@ -191,6 +210,13 @@ Peces de agua dulce:
 - `ramirezi`: pez pequeno territorial que necesita un entorno estable.
 - `gourami`: gourami enano, territorial; se mantiene uno por acuario.
 - `ancistrus`: pez de fondo y consumidor de algas.
+
+Catálogo marino de aprendizaje:
+
+- Peces disponibles: pez payaso, gramma real, damisela azul y pez dardo de fuego.
+- El cirujano azul se muestra como ejemplo educativo, pero no se puede agregar porque necesita un tanque mucho mayor.
+- Invertebrados: gamba limpiadora, cangrejo ermitaño y caracol turbo.
+- Corales: zoántido, coral hongo, euphyllia y acropora. Son animales, no plantas; su crecimiento simulado requiere ciclado, luz, circulación y agua estable.
 
 Peces de cardumen:
 
@@ -342,6 +368,21 @@ Comandos frecuentes recomendados:
 - `cambio de agua 30%`
 - `agrega un betta`
 - `agrega madera mopani`
+- `cambia al acuario marino`
+- `cambia al acuario dulce`
+- `agrega un pez payaso`
+- `agrega un caracol turbo`
+- `agrega coral hongo`
+- `enciende el skimmer`
+- `enciende la circulacion`
+- `repón evaporación`
+- `¿qué es el ciclado?`
+- `¿cómo repongo el agua evaporada?`
+- `cambia al acuario marino`
+
+Las respuestas a `menu`, `especies`, `inventario` e `ideas` dependen del modo activo. Las consultas educativas se resuelven antes de interpretar acciones; por ejemplo: `¿qué es el amonio?`, `¿qué significa alcalinidad?`, `¿cómo funciona el ciclado?`.
+
+En modo marino, los cambios requieren porcentaje explícito, como `cambio de agua 10%`; el chat recuerda que el agua real debe prepararse con mezcla marina específica e igualarse en temperatura y salinidad. Para practicar reposición de evaporación usa `repón evaporación`.
 
 Conversacion guiada:
 
@@ -380,7 +421,7 @@ Estado rapido:
 - `agua`
 - `calidad`
 
-Comprar peces:
+Comprar peces de agua dulce (solo con modo Agua dulce seleccionado):
 
 - `agrega dos neones`
 - `quiero un betta`
@@ -393,6 +434,19 @@ Invertebrados:
 - `agrega gambas cherry`
 - `compra un caracol neritina`
 - `pon dos caracoles planorbis`
+
+Invertebrados marinos (solo con modo Marino seleccionado):
+
+- `agrega una gamba limpiadora`
+- `agrega un caracol turbo`
+- `agrega un cangrejo ermitaño`
+
+Corales (solo tras el ciclado didáctico):
+
+- `agrega coral hongo`
+- `agrega un zoantido`
+- `agrega una euphyllia`
+- `agrega una acropora`
 
 Plantas y algas:
 
@@ -419,6 +473,7 @@ Ecosistema:
 - `como esta la calidad del agua`
 - `pon el tiempo rapido`
 - `pausa el acuario`
+- `repón evaporación` (solo marino; práctica didáctica, no es un cambio parcial de agua)
 
 ## Codespaces y persistencia
 
@@ -431,6 +486,9 @@ El estado de la partida se guarda en `backend/data/aquarium-state.json`, que no 
 - El parser local interpreta el chat; el movimiento, hambre, agua, crecimiento, compatibilidad y reproduccion los maneja el backend.
 - `backend/llmService.js` conserva su nombre por compatibilidad interna, pero ya no usa un LLM: es un interprete determinista con validacion y aclaraciones.
 - No se deben versionar `backend/data/`, logs, `.env` ni `node_modules`.
-- La version `1.8.0` incorpora un paisaje vivo por capas, sustrato con rocas y grava, maderas diferenciadas, luz y claridad de agua reactivas, burbujeo localizado y vallisneria como planta alta de fondo.
-- La version `1.7.0` incorpora el panel de ecosistema en dos columnas para hacer visibles las alertas, y ambiente sonoro opcional de filtro con burbujas y volumen regulable.
+- La version `2.0.0` incorpora el selector de agua dulce/marino con partidas independientes, ayudas y catálogos contextuales, paisaje de arrecife, corales, química marina, ciclado didáctico y explicaciones para aprender ambos ecosistemas.
+- La version `2.0.0` cambia el esquema de persistencia sin borrar la partida anterior: el archivo legado se migra al estado dulce y se crea un estado marino separado.
+- Los parámetros, ritmos y límites de población del arrecife son simplificaciones educativas; en la vida real se miden y ajustan según el sistema y las especies.
+- La version `1.8.0` incorporó un paisaje vivo por capas, sustrato con rocas y grava, maderas diferenciadas, luz y claridad de agua reactivas, burbujeo localizado y vallisneria como planta alta de fondo.
+- La version `1.7.0` incorporó el panel de ecosistema en dos columnas y ambiente sonoro opcional de filtro con burbujas.
 - Las funciones anteriores incluyen cardumen, reproduccion visual, filtro degradable, salud y estres individual, ciclo dia/noche, efectos de luz y taninos, refugios y comportamiento natural.

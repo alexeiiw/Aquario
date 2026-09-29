@@ -7,33 +7,44 @@ const __dirname = path.dirname(__filename);
 const DATA_DIR = path.join(__dirname, 'data');
 const STATE_FILE = path.join(DATA_DIR, 'aquarium-state.json');
 
-export async function loadState(defaultState) {
+export async function loadAquariums(defaultAquariums) {
   try {
     const raw = await fs.readFile(STATE_FILE, 'utf8');
-    const state = JSON.parse(raw);
+    const saved = JSON.parse(raw);
+    if (saved.acuarios && typeof saved.acuarios === 'object') {
+      return {
+        modoActivo: saved.modoActivo === 'marino' ? 'marino' : 'dulce',
+        acuarios: {
+          dulce: mergeState(defaultAquariums.dulce, saved.acuarios.dulce),
+          marino: mergeState(defaultAquariums.marino, saved.acuarios.marino)
+        }
+      };
+    }
     return {
-      ...defaultState,
-      ...state,
-      peces: Array.isArray(state.peces) ? state.peces : [],
-      invertebrados: Array.isArray(state.invertebrados) ? state.invertebrados : [],
-      plantas: Array.isArray(state.plantas) ? state.plantas : [],
-      algas: Array.isArray(state.algas) ? state.algas : [],
-      comida: Array.isArray(state.comida) ? state.comida : [],
-      mensajes: Array.isArray(state.mensajes) ? state.mensajes : defaultState.mensajes
+      modoActivo: 'dulce',
+      acuarios: { dulce: mergeState(defaultAquariums.dulce, saved), marino: defaultAquariums.marino }
     };
   } catch (error) {
-    if (error.code !== 'ENOENT') {
-      console.warn('No se pudo cargar el estado guardado:', error.message);
-    }
-    return defaultState;
+    if (error.code !== 'ENOENT') console.warn('No se pudieron cargar los acuarios guardados:', error.message);
+    return { modoActivo: 'dulce', acuarios: defaultAquariums };
   }
 }
 
-export async function saveState(state) {
+function mergeState(defaultState, savedState = {}) {
+  const state = { ...defaultState, ...savedState };
+  for (const key of ['peces', 'invertebrados', 'plantas', 'algas', 'corales', 'maderas', 'comida', 'huevos', 'mensajes']) {
+    state[key] = Array.isArray(savedState[key]) ? savedState[key] : defaultState[key];
+  }
+  state.calidadAgua = { ...defaultState.calidadAgua, ...(savedState.calidadAgua || {}) };
+  state.equipos = { ...defaultState.equipos, ...(savedState.equipos || {}) };
+  state.reproduccion = { ...defaultState.reproduccion, ...(savedState.reproduccion || {}) };
+  return state;
+}
+
+export async function saveAquariums(data) {
   await fs.mkdir(DATA_DIR, { recursive: true });
-  const serializable = {
-    ...state,
+  await fs.writeFile(STATE_FILE, JSON.stringify({
+    ...data,
     ultimaPersistencia: new Date().toISOString()
-  };
-  await fs.writeFile(STATE_FILE, JSON.stringify(serializable, null, 2), 'utf8');
+  }, null, 2), 'utf8');
 }

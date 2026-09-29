@@ -34,17 +34,33 @@ io.on('connection', (socket) => {
   socket.chatContext = null;
   socket.emit('state:update', game.getPublicState());
 
+  socket.on('aquarium:mode', (mode, callback) => {
+    socket.chatContext = null;
+    const ok = game.switchMode(mode);
+    if (typeof callback === 'function') callback({ ok, mode: game.activeMode });
+    io.emit('state:update', game.getPublicState());
+  });
+
   socket.on('chat:message', async (text, callback) => {
     const message = String(text || '').trim().slice(0, 600);
     if (!message) return;
 
-    game.addChatMessage('usuario', message);
-    io.emit('state:update', game.getPublicState());
+    const modeCommand = message.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').match(/^(?:cambiar|ir|cambia|abre)\s+(?:al\s+)?(?:acuario\s+)?(dulce|marino)$/);
+    if (modeCommand) {
+      socket.chatContext = null;
+      game.switchMode(modeCommand[1]);
+      game.addChatMessage('usuario', message);
+      game.addChatMessage('ia', `Acuario ${modeCommand[1]} activo. Cada modo conserva por separado habitantes, agua, objetos y mensajes.`);
+      io.emit('state:update', game.getPublicState());
+      if (typeof callback === 'function') callback({ ok: true, result: { acciones: [], respuesta_chat: `Acuario ${modeCommand[1]} activo.` } });
+      return;
+    }
 
     try {
       const localReply = game.resolveLocalCommand(message);
       if (localReply) {
         socket.chatContext = null;
+        game.addChatMessage('usuario', message);
         game.addChatMessage('ia', localReply);
         io.emit('chat:reply', { acciones: [], respuesta_chat: localReply });
         io.emit('state:update', game.getPublicState());
@@ -52,11 +68,12 @@ io.on('connection', (socket) => {
         return;
       }
 
-      const result = await interpretUserMessage(message, socket.chatContext);
+      const result = await interpretUserMessage(message, socket.chatContext, game.activeMode);
       socket.chatContext = result.contexto ? { pending: result.contexto } : null;
       const engineSummary = game.applyActions(result.acciones);
       const engineText = engineSummary.length > 0 ? ` ${engineSummary.join('. ')}.` : '';
       const reply = `${result.respuesta_chat}${engineText}`.slice(0, 700);
+      game.addChatMessage('usuario', message);
       game.addChatMessage('ia', reply);
       io.emit('chat:reply', result);
       io.emit('state:update', game.getPublicState());
@@ -87,13 +104,13 @@ async function main() {
 process.on('SIGINT', async () => {
   console.log('Guardando estado antes de salir...');
   game.stop();
-  await game.persist();
+  await game.flushActiveState();
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
   game.stop();
-  await game.persist();
+  await game.flushActiveState();
   process.exit(0);
 });
 
