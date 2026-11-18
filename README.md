@@ -481,6 +481,10 @@ No es necesario regenerar el Codespace para recuperar espacio por retirar Ollama
 
 El estado de la partida se guarda en `backend/data/aquarium-state.json`, que no se versiona. Si borras el Codespace, tambien puedes perder ese estado.
 
+## Licencia
+
+Este proyecto está distribuido bajo la licencia MIT. Consulta el archivo `LICENSE` para más detalles.
+
 ## Notas de desarrollo
 
 - El parser local interpreta el chat; el movimiento, hambre, agua, crecimiento, compatibilidad y reproduccion los maneja el backend.
