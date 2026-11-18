@@ -1,6 +1,6 @@
 # Acuario Virtual 2D Inteligente
 
-Version `2.0.0`.
+Version `2.1.0`.
 
 Simulador didáctico web estilo Tamagotchi de acuarios 2D de agua dulce y marino. El selector cambia entre dos ecosistemas con partidas, habitantes, parámetros, inventario y chat independientes. Un parser local interpreta comandos y preguntas educativas en español.
 
@@ -107,7 +107,7 @@ rm -f backend/data/aquarium-state.json
 - Pregunta `¿qué es la salinidad?`, `¿qué significa alcalinidad?`, `¿qué es el calcio?`, `¿qué es un skimmer?` o `¿cómo funciona el ciclado?` para recibir explicaciones.
 - La evaporación concentra la sal: para reponer evaporación real se usa agua dulce purificada; para cambios parciales, agua salada preparada con una mezcla específica marina, igualada en temperatura y salinidad.
 - El cirujano azul aparece como especie de estudio, pero no se puede agregar al tanque simulado por el espacio que requiere. Las reglas de peces territoriales y corales también se explican en el chat.
-- Límite educativo: el arrecife simulado admite como máximo 12 peces e invertebrados. En acuarios reales la capacidad depende del volumen, el equipo y las necesidades de cada especie.
+- Límite educativo: el arrecife simulado admite como máximo 16 organismos entre peces, invertebrados y corales. En acuarios reales la capacidad depende del volumen, el equipo y las necesidades de cada especie.
 - `¿necesita un cambio de agua?` y `diagnostico` consultan las alertas sin aplicar cambios. `¿cómo hago un cambio de agua?` explica el procedimiento; para ejecutarlo se indica un porcentaje.
 - `¿cómo está la salinidad?` muestra las mediciones marinas. Una consulta que incluya `¿necesita` devuelve diagnóstico y no aplica acciones.
 - `repón evaporación` practica el rellenado: acerca gradualmente la salinidad al objetivo sin retirar nitratos. Representa reponer con agua dulce purificada, no hacer un cambio parcial.
@@ -213,7 +213,7 @@ Peces de agua dulce:
 
 Catálogo marino de aprendizaje:
 
-- Peces disponibles: pez payaso, gramma real, damisela azul y pez dardo de fuego.
+- Peces disponibles: pez payaso, gramma real, damisela azul, pez dardo de fuego, pez mariposa, ángel enano y blenny.
 - El cirujano azul se muestra como ejemplo educativo, pero no se puede agregar porque necesita un tanque mucho mayor.
 - Invertebrados: gamba limpiadora, cangrejo ermitaño y caracol turbo.
 - Corales: zoántido, coral hongo, euphyllia y acropora. Son animales, no plantas; su crecimiento simulado requiere ciclado, luz, circulación y agua estable.
@@ -490,6 +490,7 @@ Este proyecto está distribuido bajo la licencia MIT. Consulta el archivo `LICEN
 - El parser local interpreta el chat; el movimiento, hambre, agua, crecimiento, compatibilidad y reproduccion los maneja el backend.
 - `backend/llmService.js` conserva su nombre por compatibilidad interna, pero ya no usa un LLM: es un interprete determinista con validacion y aclaraciones.
 - No se deben versionar `backend/data/`, logs, `.env` ni `node_modules`.
+- La version `2.1.0` añade pez mariposa, ángel enano y blenny al catálogo marino, y sube el tope del arrecife a 16 organismos. El ángel enano, como la gramma, admite un solo ejemplar.
 - La version `2.0.0` incorpora el selector de agua dulce/marino con partidas independientes, ayudas y catálogos contextuales, paisaje de arrecife, corales, química marina, ciclado didáctico y explicaciones para aprender ambos ecosistemas.
 - La version `2.0.0` cambia el esquema de persistencia sin borrar la partida anterior: el archivo legado se migra al estado dulce y se crea un estado marino separado.
 - Los parámetros, ritmos y límites de población del arrecife son simplificaciones educativas; en la vida real se miden y ajustan según el sistema y las especies.

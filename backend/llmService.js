@@ -1,5 +1,5 @@
 const freshwaterFish = ['neon', 'guppy', 'betta', 'molly', 'angel', 'cebra', 'corydora', 'platy', 'xipho', 'otocinclus', 'rasbora', 'tetra', 'ramirezi', 'gourami', 'ancistrus'];
-const marineFish = ['payaso', 'gramma', 'cirujano_azul', 'damisela', 'firefish'];
+const marineFish = ['payaso', 'gramma', 'cirujano_azul', 'damisela', 'firefish', 'mariposa', 'angel_enano', 'blenny'];
 const freshwaterInvertebrates = ['neritina', 'manzana', 'planorbis', 'cherry', 'amano', 'fantasma'];
 const marineInvertebrates = ['camaron_limpiador', 'cangrejo_ermitano', 'caracol_turbo'];
 const marineStudyFish = ['cirujano_azul'];
@@ -27,7 +27,7 @@ function parseLocalMessage(message, context, mode) {
   if (pending) return pending;
 
   if (marine) {
-    if (/\b(cirujano azul|cirujano)\b/.test(text) && !/\b(cambio de agua|cambiar agua|cambia agua)\b/.test(text)) return { acciones: [], respuesta_chat: 'El cirujano azul es una especie de estudio, no disponible para agregar: es un nadador activo y necesita mucho más espacio de nado que este tanque didáctico. El catálogo jugable ofrece pez payaso, gramma, damisela y pez dardo de fuego.', contexto: null };
+    if (/\b(cirujano azul|cirujano)\b/.test(text) && !/\b(cambio de agua|cambiar agua|cambia agua)\b/.test(text)) return { acciones: [], respuesta_chat: 'El cirujano azul es una especie de estudio, no disponible para agregar: es un nadador activo y necesita mucho más espacio de nado que este tanque didáctico. El catálogo jugable ofrece pez payaso, gramma, damisela, pez dardo de fuego, pez mariposa, ángel enano y blenny.', contexto: null };
     const cyclingQuestion = /\b(que|qué|como|cómo|explica|significa|importa)\b/.test(text) && /\b(ciclado|ciclo biologico|ciclo biológico|acuario nuevo)\b/.test(text);
     const concept = text.match(/\b(salinidad|evaporacion|sal|temperatura|alcalinidad|calcio|coral(?:es)?|skimmer|espumador|circulacion|corriente)\b/);
     if (cyclingQuestion) return { acciones: [], respuesta_chat: `Aprendizaje: ${marineLesson('ciclado')}`, contexto: null };
@@ -38,7 +38,7 @@ function parseLocalMessage(message, context, mode) {
       return { acciones: [], respuesta_chat: `Aprendizaje: ${marineLesson(normalizedConcept)}`, contexto: null };
     }
   }
-  if (!marine && /\b(pez payaso|payaso|gramma|cirujano azul|damisela|firefish|caracol turbo|gamba limpiadora|cangrejo ermitaño|coral|corales|arrecife|salinidad|skimmer|espumador)\b/.test(text)) {
+  if (!marine && /\b(pez payaso|payaso|gramma|cirujano azul|damisela|firefish|caracol turbo|gamba limpiadora|cangrejo|mariposa|blenny|angel enano ermitaño|coral|corales|arrecife|salinidad|skimmer|espumador)\b/.test(text)) {
     return { acciones: [], respuesta_chat: 'Eso pertenece al acuario marino. Usa el switch Marino de la interfaz para abrir esa partida independiente; tu acuario de agua dulce y sus habitantes seguirán guardados sin cambios.', contexto: null };
   }
 
@@ -49,7 +49,7 @@ function parseLocalMessage(message, context, mode) {
     return { acciones: [], respuesta_chat: 'En esta simulación los corales crecen cuando el ciclado está completo, la luz y circulación están activas y salinidad, temperatura, pH, alcalinidad y calcio están en rango. En un acuario real identifica primero la especie y mide los parámetros; cada coral tiene requisitos propios.', contexto: null };
   }
 
-  if (!marine && /\b(pez payaso|payaso|gramma|damisela|firefish|caracol turbo|gamba limpiadora|cirujano azul|coral|corales|salinidad|skimmer|espumador)\b/.test(text)) {
+  if (!marine && /\b(pez payaso|payaso|gramma|damisela|firefish|caracol turbo|gamba limpiadora|cirujano azul|mariposa|blenny|angel enano|coral|corales|salinidad|skimmer|espumador)\b/.test(text)) {
     return { acciones: [], respuesta_chat: 'Ese organismo o equipo corresponde al acuario marino. Pulsa Marino en el selector superior para abrir su partida independiente; el acuario dulce no se modifica.', contexto: null };
   }
 
@@ -132,7 +132,7 @@ function resolvePending(text, pending, catalogs) {
 
 function findMissingCategory(text, marine = false) {
   if (marine && /\b(coral|corales|arrecife)\b/.test(text)) return 'coral';
-  if (marine && /\b(payaso|gramma|cirujano|damisela|firefish)\b/.test(text)) return 'pez';
+  if (marine && /\b(payaso|gramma|cirujano|damisela|firefish|mariposa|angel enano|blenny)\b/.test(text)) return 'pez';
   if (/\b(pez|peces|neon|guppy|betta|molly|angel|escalar|cebra|danio|cory|platy|xipho|otocinclus|oto|rasbora|arlequin|tetra|cardenal|ramirezi|gourami|ancistrus|pleco)\b/.test(text)) return 'pez';
   if (/\b(invertebrado|caracol|gamba|camar[oó]n|neritina|manzana|planorbis|cherry|amano|fantasma|turbo|cangrejo|ermitaño|ermitan[oó]|camaron|limpiadora)\b/.test(text)) return 'invertebrado';
   if (/\b(planta|plantas|vegetacion)\b/.test(text)) return 'planta';
@@ -144,7 +144,7 @@ function findMissingCategory(text, marine = false) {
 function clarificationForCategory(category, text, marine = false) {
   const cantidad = findQuantity(text);
   const questions = {
-    pez: marine ? '¿Qué pez marino quieres conocer? El catálogo de aprendizaje incluye pez payaso, gramma real, damisela azul y pez dardo de fuego. El cirujano azul está descrito, pero este tanque simulado no tiene el espacio que requiere.' : '¿Qué pez deseas agregar? Puedes elegir neon, guppy, betta, molly, angel, cebra, corydora, platy, xipho, otocinclus, rasbora, tetra, ramirezi, gourami o ancistrus.',
+    pez: marine ? '¿Qué pez marino quieres conocer? El catálogo de aprendizaje incluye pez payaso, gramma real, damisela azul, pez dardo de fuego, pez mariposa, ángel enano y blenny. El cirujano azul está descrito, pero este tanque simulado no tiene el espacio que requiere.' : '¿Qué pez deseas agregar? Puedes elegir neon, guppy, betta, molly, angel, cebra, corydora, platy, xipho, otocinclus, rasbora, tetra, ramirezi, gourami o ancistrus.',
     invertebrado: marine ? '¿Qué invertebrado marino deseas agregar: gamba limpiadora, cangrejo ermitaño o caracol turbo?' : '¿Qué deseas agregar: caracol neritina, manzana, planorbis o gamba cherry, amano o fantasma?',
     planta: '¿Qué planta deseas agregar: anubia, ambulia o vallisneria?',
     alga: '¿Qué tipo de alga deseas agregar: verde o filamentosa?',
@@ -167,7 +167,7 @@ function addSpeciesActions(actions, text, species, type, normalize = (value) => 
 function speciesAliases(species) {
   const aliases = {
     neon: ['neon', 'neones'], guppy: ['guppy', 'guppies', 'gupies', 'gypies', 'gupi'], betta: ['betta', 'beta'],
-    payaso: ['pez payaso', 'payaso'], gramma: ['gramma real', 'gramma'], cirujano_azul: ['cirujano azul', 'cirujano'], damisela: ['damisela azul', 'damisela'], firefish: ['firefish', 'pez dardo', 'dardo de fuego'],
+    payaso: ['pez payaso', 'payaso'], gramma: ['gramma real', 'gramma'], cirujano_azul: ['cirujano azul', 'cirujano'], damisela: ['damisela azul', 'damisela'], firefish: ['firefish', 'pez dardo', 'dardo de fuego'], mariposa: ['pez mariposa', 'mariposa'], angel_enano: ['angel enano', 'ángel enano'], blenny: ['blenny'],
     camaron_limpiador: ['camaron limpiador', 'gamba limpiadora', 'limpiadora'], cangrejo_ermitano: ['cangrejo ermitano', 'cangrejo ermitaño', 'ermitaño'], caracol_turbo: ['caracol turbo', 'turbo'],
     zoanthid: ['zoanthid', 'zoantido', 'zoantidos', 'zoanthidos'], hongo: ['coral hongo', 'hongo'], euphyllia: ['euphyllia'], acropora: ['acropora'],
     angel: ['angel', 'angeles', 'escalar'], cebra: ['cebra', 'cebras', 'danio', 'danios'],

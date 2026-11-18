@@ -10,7 +10,7 @@ const SCHOOLING_SPECIES = ['neon', 'cebra', 'rasbora', 'tetra'];
 const SEXED_REPRODUCTION = ['guppy', 'cherry'];
 const DAY_LENGTH_HOURS = 24;
 const FRESHWATER_FISH = ['neon', 'guppy', 'betta', 'molly', 'angel', 'cebra', 'corydora', 'platy', 'xipho', 'otocinclus', 'rasbora', 'tetra', 'ramirezi', 'gourami', 'ancistrus'];
-const MARINE_FISH = ['payaso', 'gramma', 'damisela', 'firefish'];
+const MARINE_FISH = ['payaso', 'gramma', 'damisela', 'firefish', 'mariposa', 'angel_enano', 'blenny'];
 const MARINE_STUDY_FISH = ['cirujano_azul'];
 const FRESHWATER_INVERTEBRATES = ['neritina', 'manzana', 'planorbis', 'cherry', 'amano', 'fantasma'];
 const MARINE_INVERTEBRATES = ['camaron_limpiador', 'cangrejo_ermitano', 'caracol_turbo'];
@@ -185,6 +185,18 @@ const FISH_DEFS = {
   firefish: {
     nombre: 'Pez Dardo de Fuego', latin: 'Nemateleotris magnifica', hungerPerHour: 5, maxScale: 1,
     growthHours: 50, speed: 26, color: '#f43f5e', accent: '#fef08a'
+  },
+  mariposa: {
+    nombre: 'Pez Mariposa', latin: 'Chaetodon sp.', hungerPerHour: 5, maxScale: 1.1,
+    growthHours: 60, speed: 22, color: '#facc15', accent: '#1e293b'
+  },
+  angel_enano: {
+    nombre: 'Ángel Enano', latin: 'Centropyge sp.', hungerPerHour: 5, maxScale: 1.1,
+    growthHours: 62, speed: 20, color: '#f97316', accent: '#2563eb'
+  },
+  blenny: {
+    nombre: 'Blenny', latin: 'Ecsenius sp.', hungerPerHour: 3, maxScale: 0.9,
+    growthHours: 44, speed: 12, color: '#84cc16', accent: '#f8fafc'
   }
 };
 
@@ -1531,7 +1543,7 @@ export class GameEngine extends EventEmitter {
       ? this.state.peces.length + this.state.invertebrados.length + this.state.corales.length
       : this.totalAnimals();
     if (this.activeMode === 'marino' && species === 'cirujano_azul') return { ok: false, message: 'El cirujano azul se estudia en el catálogo, pero no se puede agregar aquí: necesita mucho más espacio de nado que este acuario simulado.' };
-    if (this.activeMode === 'marino' && biologicalLoad + amount > 12) return { ok: false, message: 'Este arrecife didáctico tiene un máximo conservador de 12 organismos entre peces, invertebrados y corales. En acuarios reales la capacidad depende del volumen, filtración y necesidades de cada especie; no existe un número universal.' };
+    if (this.activeMode === 'marino' && biologicalLoad + amount > 16) return { ok: false, message: 'Este arrecife didáctico tiene un máximo conservador de 16 organismos entre peces, invertebrados y corales. En acuarios reales la capacidad depende del volumen, filtración y necesidades de cada especie; no existe un número universal.' };
     if (biologicalLoad + amount > 45) {
       return { ok: false, message: 'No se agrego: el acuario ya esta cerca de su limite biologico.' };
     }
@@ -1546,6 +1558,7 @@ export class GameEngine extends EventEmitter {
         return { ok: false, message: 'No se agregó la damisela. Puede ser muy territorial, especialmente en acuarios pequeños; para aprender, mantén solo una y ofrece escondites.' };
       }
       if (species === 'gramma' && (amount > 1 || this.state.peces.some((fish) => fish.vivo && fish.tipo === 'gramma'))) return { ok: false, message: 'No se agregó otra gramma real: puede defender su cueva y su territorio. En este acuario didáctico mantenemos una para evitar conflictos.' };
+      if (species === 'angel_enano' && (amount > 1 || this.state.peces.some((fish) => fish.vivo && fish.tipo === 'angel_enano'))) return { ok: false, message: 'No se agregó otro ángel enano: es territorial y puede pelear con otros peces de su zona. Para aprender, mantén uno y ofrece refugio.' };
       if (species === 'firefish' && (amount > 1 || this.state.peces.some((fish) => fish.vivo && fish.tipo === 'firefish'))) return { ok: false, message: 'No se agregó otro pez dardo: puede saltar cuando se asusta; en acuarios reales necesita tapa segura. Esta simulación limita el grupo para enseñar esa precaución.' };
       if (MARINE_INVERTEBRATES.includes(species) && !this.isMarineTankCycled()) return { ok: false, message: 'El filtro aún está en ciclo educativo. No introduzcas invertebrados hasta terminarlo y comprobar amonio y nitrito en cero con pruebas en un acuario real.' };
       if (['acropora', 'euphyllia'].includes(species)) return { ok: false, message: 'Ese organismo es un coral, no un pez. Pídelo como coral acropora o coral euphyllia.' };
@@ -1697,7 +1710,7 @@ export class GameEngine extends EventEmitter {
   }
 
   buildHelpMessage() {
-    if (this.activeMode === 'marino') return 'Ayuda del acuario marino: catálogo jugable de pez payaso, gramma real, damisela azul y pez dardo de fuego; la damisela puede ser territorial y el pez dardo puede saltar. El cirujano azul es solo de estudio: requiere más espacio y se bloquea. Invertebrados: gamba limpiadora, cangrejo ermitaño (ofrece conchas vacías) y caracol turbo. Corales: zoántido, hongo, euphyllia y acropora; son animales y se agregan tras el ciclado y con agua estable. Usa menu, especies, inventario, ideas, estado y diagnostico. Pregunta por salinidad, evaporación, temperatura, pH, alcalinidad, calcio, circulación, skimmer, ciclado o crecimiento coralino. Los cambios parciales necesitan agua salada preparada; para evaporación se repone con agua dulce purificada. En acuarios reales mide antes de actuar y verifica amonio/nitrito antes de poblar.';
+    if (this.activeMode === 'marino') return 'Ayuda del acuario marino: catálogo jugable de pez payaso, gramma real, damisela azul, pez dardo de fuego, pez mariposa, ángel enano y blenny; la damisela y el ángel enano pueden ser territoriales y el pez dardo puede saltar. El pez mariposa es un alimentador delicado; el blenny vive en el fondo. El cirujano azul es solo de estudio: requiere más espacio y se bloquea. Invertebrados: gamba limpiadora, cangrejo ermitaño (ofrece conchas vacías) y caracol turbo. Corales: zoántido, hongo, euphyllia y acropora; son animales y se agregan tras el ciclado y con agua estable. Usa menu, especies, inventario, ideas, estado y diagnostico. Pregunta por salinidad, evaporación, temperatura, pH, alcalinidad, calcio, circulación, skimmer, ciclado o crecimiento coralino. Los cambios parciales necesitan agua salada preparada; para evaporación se repone con agua dulce purificada. En acuarios reales mide antes de actuar y verifica amonio/nitrito antes de poblar.';
     return 'Ayuda del acuario dulce: usa especies, inventario, ideas, estado o diagnostico. Peces: neon, guppy, betta, molly, angel/escalar, cebra, corydora, platy, xipho, otocinclus, rasbora, tetra, ramirezi, gourami y ancistrus. Invertebrados: neritina, manzana, planorbis, gambas cherry/amano/fantasma. Plantas: anubia, ambulia, vallisneria; algas verde/filamentosa; maderas mopani/manzanita/spider/cholla/manglar. También puedes alimentar, limpiar, controlar luz y tiempo. El selector superior abre el arrecife; ambas partidas se guardan separadas.';
   }
 
@@ -1726,7 +1739,7 @@ export class GameEngine extends EventEmitter {
   buildSpeciesTreeMessage() {
     if (this.activeMode === 'marino') return [
       'Catálogo del arrecife marino (independiente del catálogo dulce):',
-      'Peces disponibles: pez payaso, gramma real, damisela azul y pez dardo de fuego. Especie de estudio no disponible: cirujano azul, porque requiere mucho más espacio.',
+      'Peces disponibles: pez payaso, gramma real, damisela azul, pez dardo de fuego, pez mariposa, ángel enano y blenny. Especie de estudio no disponible: cirujano azul, porque requiere mucho más espacio.',
       'Invertebrados: gamba limpiadora, cangrejo ermitaño, caracol turbo.',
       'Corales: zoántido, coral hongo, euphyllia y acropora. Son animales, no plantas.',
       `Progreso del filtro en el juego: ${this.state.cicloBiologico?.listo ? 'ciclado didáctico completado' : `${Math.round((this.state.cicloBiologico?.horas || 0) / (this.state.cicloBiologico?.horasNecesarias || 72) * 100)}%`}. Antes de agregar habitantes, usa diagnostico. En un acuario real confirma amonio y nitrito con pruebas; el tiempo de juego no sirve como prueba.`
