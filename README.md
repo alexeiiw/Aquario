@@ -1,6 +1,6 @@
 # Acuario Virtual 2D Inteligente
 
-Version `2.1.0`.
+Version `2.1.1`.
 
 Simulador didáctico web estilo Tamagotchi de acuarios 2D de agua dulce y marino. El selector cambia entre dos ecosistemas con partidas, habitantes, parámetros, inventario y chat independientes. Un parser local interpreta comandos y preguntas educativas en español.
 
@@ -111,6 +111,7 @@ rm -f backend/data/aquarium-state.json
 - `¿necesita un cambio de agua?` y `diagnostico` consultan las alertas sin aplicar cambios. `¿cómo hago un cambio de agua?` explica el procedimiento; para ejecutarlo se indica un porcentaje.
 - `¿cómo está la salinidad?` muestra las mediciones marinas. Una consulta que incluya `¿necesita` devuelve diagnóstico y no aplica acciones.
 - `repón evaporación` practica el rellenado: acerca gradualmente la salinidad al objetivo sin retirar nitratos. Representa reponer con agua dulce purificada, no hacer un cambio parcial.
+- El pH también se corrige gradualmente al hacer un cambio parcial: en marino se acerca a `8.1`; en dulce, a `7.2`. Si la alerta marina de pH aparece, escribe `cambio de agua 10%`; no hay un corrector directo de pH en la simulación.
 - Es una simulación educativa, no reemplaza pruebas reales del agua, investigación de compatibilidad ni asesoría para mantener animales reales.
 
 ## Tiempo
@@ -178,6 +179,7 @@ Cambio de agua:
 - `cambio de agua 30%`: permite indicar el porcentaje.
 - El motor limita cada cambio entre `5%` y `80%` para evitar cambios extremos.
 - El cambio reduce amonio, nitritos y nitratos, y aumenta parcialmente el oxigeno.
+- También acerca el pH al valor didáctico del agua nueva: `8.1` en marino y `7.2` en agua dulce. En el arrecife usa un porcentaje explícito, por ejemplo `cambio de agua 10%`.
 
 ## Filtro, Luz Y Salud
 
@@ -490,6 +492,7 @@ Este proyecto está distribuido bajo la licencia MIT. Consulta el archivo `LICEN
 - El parser local interpreta el chat; el movimiento, hambre, agua, crecimiento, compatibilidad y reproduccion los maneja el backend.
 - `backend/llmService.js` conserva su nombre por compatibilidad interna, pero ya no usa un LLM: es un interprete determinista con validacion y aclaraciones.
 - No se deben versionar `backend/data/`, logs, `.env` ni `node_modules`.
+- La version `2.1.1` hace que los cambios parciales ajusten gradualmente el pH hacia el objetivo de cada modo e indica en la alerta marina el comando `cambio de agua 10%`.
 - La version `2.1.0` añade pez mariposa, ángel enano y blenny al catálogo marino, y sube el tope del arrecife a 16 organismos. El ángel enano, como la gramma, admite un solo ejemplar.
 - La version `2.0.0` incorpora el selector de agua dulce/marino con partidas independientes, ayudas y catálogos contextuales, paisaje de arrecife, corales, química marina, ciclado didáctico y explicaciones para aprender ambos ecosistemas.
 - La version `2.0.0` cambia el esquema de persistencia sin borrar la partida anterior: el archivo legado se migra al estado dulce y se crea un estado marino separado.

@@ -853,15 +853,17 @@ export class GameEngine extends EventEmitter {
         water.nitritos = clamp(water.nitritos * remaining, 0, 100);
         water.nitratos = clamp(water.nitratos * remaining, 0, 100);
         water.oxigeno = clamp(water.oxigeno + percentage * 0.08, 0, 100);
+        const exchange = percentage / 100;
+        const targetPh = this.activeMode === 'marino' ? 8.1 : 7.2;
+        water.ph = clamp((water.ph ?? targetPh) + (targetPh - (water.ph ?? targetPh)) * exchange, 5.5, 8.5);
         if (this.activeMode === 'marino') {
-          const exchange = percentage / 100;
           water.salinidad += (35 - water.salinidad) * exchange;
           water.temperatura += (25 - water.temperatura) * exchange;
           water.alcalinidad += (8.5 - water.alcalinidad) * exchange;
           water.calcio += (420 - water.calcio) * exchange;
-          summary.push(' En un acuario real prepara agua salada específica y ajusta temperatura y salinidad antes del cambio; no uses agua dulce de grifo ni sal de mesa.');
+          summary.push(' El pH se acercó al objetivo didáctico de 8.1. En un acuario real prepara agua salada específica y ajusta temperatura y salinidad antes del cambio; no uses agua dulce de grifo ni sal de mesa.');
         } else {
-          summary.push(' Usa agua dulce acondicionada, con temperatura parecida al acuario; no reemplaces toda el agua de golpe.');
+          summary.push(' El pH se acercó al objetivo didáctico de 7.2. Usa agua dulce acondicionada, con temperatura parecida al acuario; no reemplaces toda el agua de golpe.');
         }
         this.recalculateWaterHealth();
         summary.push(`cambio de agua del ${percentage}% realizado`);
@@ -1223,8 +1225,7 @@ export class GameEngine extends EventEmitter {
       if (water.temperatura < 23 || water.temperatura > 27) alerts.push({ tipo: 'temperatura', severidad: 'alta', texto: 'Temperatura fuera de 23–27 °C: los cambios térmicos estresan a peces y corales. Comprueba el termómetro y corrige gradualmente; no ajustes de golpe.' });
       if (water.alcalinidad < 7 || water.alcalinidad > 10) alerts.push({ tipo: 'alcalinidad', severidad: 'media', texto: 'Alcalinidad fuera de 7–10 dKH: ayuda a mantener estable el pH y permite formar esqueletos de coral. Mide antes de corregir; evita añadir productos a ciegas.' });
       if (water.calcio < 380 || water.calcio > 460) alerts.push({ tipo: 'calcio', severidad: 'media', texto: 'Calcio fuera de 380–460 ppm: los corales duros lo usan para crecer. Mide y ajusta gradualmente; un acuario nuevo sin corales suele no necesitar suplemento.' });
-      if (water.ph < 7.8 || water.ph > 8.4) alerts.push({ tipo: 'ph-marino', severidad: 'media', texto: 'pH fuera de 7.8–8.4, rango didáctico. El pH describe acidez/alcalinidad; confirma la lectura y revisa alcalinidad y aireación antes de actuar. Evita correctores de pH añadidos a ciegas.' });
-      if (water.ph < 7.8 || water.ph > 8.4) alerts.push({ tipo: 'ph-marino', severidad: 'media', texto: 'pH fuera del rango didáctico 7.8–8.4. El pH indica acidez/alcalinidad del agua; revisa primero alcalinidad y aireación y evita corregirlo de golpe.' });
+      if (water.ph < 7.8 || water.ph > 8.4) alerts.push({ tipo: 'ph-marino', severidad: 'media', texto: 'pH fuera de 7.8–8.4, rango didáctico. En esta simulación aplica un cambio parcial escribiendo "cambio de agua 10%": el pH se acercará gradualmente a 8.1. Evita cambios grandes o correctores añadidos a ciegas.' });
       if ((this.state.equipos.circulacionActiva === false)) alerts.push({ tipo: 'circulacion', severidad: 'alta', texto: 'La circulación está apagada: el movimiento lleva oxígeno y nutrientes a todo el arrecife. Activa las bombas de circulación.' });
       if (!this.isMarineTankCycled() && (this.state.peces.length + this.state.invertebrados.length + this.state.corales.length) === 0) alerts.push({ tipo: 'ciclado', severidad: 'media', texto: `El arrecife está en la etapa educativa de ciclado (${Math.round((this.state.cicloBiologico?.horas || 0) / (this.state.cicloBiologico?.horasNecesarias || 72) * 100)}%). Aún no agregues animales: un filtro necesita bacterias beneficiosas. En un acuario real se confirma con pruebas de amonio y nitrito en cero, no solo esperando.` });
     }
